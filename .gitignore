@@ -1,1 +1,9 @@
 target/
+**.classpath
+**.project
+**.settings/
+**.iml
+**.ipr
+**.iws
+**.idea/
+
