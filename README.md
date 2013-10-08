@@ -38,7 +38,7 @@ Then include this dependency in your project:
             <version>REPLACE_KCL_VERSION</version>
         </dependency>
         
-Current KCL version: 2 (written and depends on Kotlin 0.6.602)
+Current KCL version: 2 (depends on Kotlin 0.6.602)
 
 Then in Java code you have two important class to now:
 - Klassloader: KCL API
