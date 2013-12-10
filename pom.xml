@@ -3,7 +3,7 @@
     <groupId>org.kevoree.kcl</groupId>
     <artifactId>org.kevoree.kcl.root</artifactId>
     <packaging>pom</packaging>
-    <version>3</version>
+    <version>4-SNAPSHOT</version>
     <name>Kevoree :: KCL :: Root</name>
     <url>https://github.com/dukeboard/kevoree-classloading-framework</url>
     <description>Kevoree ClassLoading framework</description>

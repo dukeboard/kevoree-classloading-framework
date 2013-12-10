@@ -5,12 +5,12 @@
     <packaging>jar</packaging>
     <name>Kevoree :: KlassLoader</name>
 
-    <version>3</version>
+    <version>4-SNAPSHOT</version>
 
     <parent>
         <artifactId>org.kevoree.kcl.root</artifactId>
         <groupId>org.kevoree.kcl</groupId>
-        <version>3</version>
+        <version>4-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
