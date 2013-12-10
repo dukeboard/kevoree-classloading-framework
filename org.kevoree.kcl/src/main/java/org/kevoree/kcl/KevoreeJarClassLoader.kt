@@ -59,6 +59,7 @@ open class KevoreeJarClassLoader() : Klassloader() {
     private final val systemLoader: ProxyClassLoader = SystemLoader()
     private final val parentLoader: ProxyClassLoader = ParentLoader()
     private final val currentLoader: ProxyClassLoader = CurrentLoader()
+    private final val threadLoader : ThreadContextLoader = ThreadContextLoader()
 
     KevoreeJarClassLoader(){
         classpathResources = KevoreeLazyJarResources(this)
@@ -67,6 +68,7 @@ open class KevoreeJarClassLoader() : Klassloader() {
         loaders.add(parentLoader)
         loaders.add(currentLoader)
         loaders.add(local_loader!!)
+       // loaders.add(threadLoader!!)
         Collections.sort(loaders)
     }
 
