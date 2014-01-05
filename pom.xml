@@ -19,7 +19,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kotlin.version>0.6.1670</kotlin.version>
+        <kotlin.version>0.6.1673</kotlin.version>
         <kevoree.log.version>1</kevoree.log.version>
     </properties>
 
