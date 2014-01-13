@@ -23,4 +23,8 @@ public abstract class FlexyClassLoader extends ClassLoader {
 
     public ResolutionPriority resolutionPriority = ResolutionPriority.CHILDS;
 
+    public abstract String getKey();
+
+    public abstract void setKey(String s);
+
 }

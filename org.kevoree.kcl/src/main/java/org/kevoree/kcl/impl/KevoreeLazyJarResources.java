@@ -131,8 +131,8 @@ public class KevoreeLazyJarResources {
                 if (!jarEntry.isDirectory()) {
                     boolean filtered = false;
                     if (parent != null) {
-                        KevoreeResourcesLoader extentionSelected = null;
-                        for (KevoreeResourcesLoader r : parent.getSpecialLoaders()) {
+                        SpecialLoader extentionSelected = null;
+                        for (SpecialLoader r : parent.getSpecialLoaders()) {
                             if (jarEntry.getName().endsWith(r.getExtension())) {
                                 extentionSelected = r;
                                 break;

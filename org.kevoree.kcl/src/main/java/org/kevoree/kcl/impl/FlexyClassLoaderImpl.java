@@ -25,11 +25,11 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         KlassLoadRequest request = new KlassLoadRequest();
         request.className = className;
         Class result = internal_loadClass(request);
-        if (result == null) {
-            Log.error("KCL Class not resolved " + className);
-            Log.error("Passed FlexClassLoader : ");
+        if (result == null && Log.DEBUG) {
+            Log.debug("KCL Class not resolved " + className);
+            Log.debug("Passed FlexClassLoader, childs : " + getSubClassLoaders().size());
             for (String klassLoader : request.passedKlassLoader) {
-                Log.error(" -> " + klassLoader);
+                Log.debug("-->" + klassLoader);
             }
             throw new ClassNotFoundException(className);
         }
@@ -102,13 +102,13 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
 
 
     /* Special Loader management */
-    public ArrayList<KevoreeResourcesLoader> specialloaders = new ArrayList<KevoreeResourcesLoader>();
+    public ArrayList<SpecialLoader> specialloaders = new ArrayList<SpecialLoader>();
 
-    protected void addSpecialLoaders(KevoreeResourcesLoader l) {
+    protected void addSpecialLoaders(SpecialLoader l) {
         specialloaders.add(l);
     }
 
-    public ArrayList<KevoreeResourcesLoader> getSpecialLoaders() {
+    public ArrayList<SpecialLoader> getSpecialLoaders() {
         return specialloaders;
     }
     /* End Special Loader management */
@@ -219,16 +219,14 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
 
     public Class graphLoadClass(KlassLoadRequest request) {
         //cut graph cyclic search
-        if (request.passedKlassLoader.contains(getKey())) {
-            return null;
-        }
-        Class result=null;
+        Class result = null;
         Collections.sort(subClassLoaders, scoreSorter);
         for (ClassLoader subCL : subClassLoaders) {
-            if (subCL instanceof FlexyClassLoaderImpl) {
-                FlexyClassLoaderImpl subKCL = (FlexyClassLoaderImpl) subCL;
-                result = subKCL.graphLoadClass(request);
-                request.passedKlassLoader.add(subKCL.getKey());
+            if (subCL instanceof FlexyClassLoader) {
+                if (!request.passedKlassLoader.contains(((FlexyClassLoader) subCL).getKey())) {
+                    FlexyClassLoaderImpl subKCL = (FlexyClassLoaderImpl) subCL;
+                    result = subKCL.internal_loadClass(request);
+                }
             } else {
                 try {
                     result = subCL.loadClass(request.className);
@@ -255,7 +253,6 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
             try {
                 result = findSystemClass(request.className);
             } catch (ClassNotFoundException e) {
-                return null;
             }
         }
         //if still not found try local load
@@ -273,11 +270,32 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
                 }
             }
         }
+        request.passedKlassLoader.add(getKey());
+        //TODO check if there no risk of cycle
         if (result == null && resolutionPriority.equals(ResolutionPriority.PARENT)) {
-            try {
-                result = getParent().loadClass(request.className);
-            } catch (ClassNotFoundException e) {
-                return null;
+            ClassLoader parentCL = getParent();
+            if (parentCL != null) {
+                if (parentCL instanceof FlexyClassLoaderImpl) {
+                    FlexyClassLoaderImpl parentCastedCL = (FlexyClassLoaderImpl) parentCL;
+                    result = parentCastedCL.internal_loadClass(request);
+                } else {
+                    try {
+                        result = parentCL.loadClass(request.className);
+                    } catch (ClassNotFoundException e) {
+                    }
+                }
+            }
+            if (result == null) {
+                ClassLoader current = this.getClass().getClassLoader();
+                if (current instanceof FlexyClassLoaderImpl) {
+                    FlexyClassLoaderImpl currentCasted = (FlexyClassLoaderImpl) current;
+                    result = currentCasted.internal_loadClass(request);
+                } else {
+                    try {
+                        result = current.loadClass(request.className);
+                    } catch (ClassNotFoundException e) {
+                    }
+                }
             }
         }
         //if still not found try to call to entire graph
@@ -286,10 +304,29 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         }
         //if priority to CHILDS nets now try parent CL
         if (result == null && resolutionPriority.equals(ResolutionPriority.CHILDS)) {
-            try {
-                result = getParent().loadClass(request.className);
-            } catch (ClassNotFoundException e) {
-                return null;
+            ClassLoader parentCL = getParent();
+            if (parentCL != null) {
+                if (parentCL instanceof FlexyClassLoaderImpl) {
+                    FlexyClassLoaderImpl parentCastedCL = (FlexyClassLoaderImpl) parentCL;
+                    result = parentCastedCL.internal_loadClass(request);
+                } else {
+                    try {
+                        result = parentCL.loadClass(request.className);
+                    } catch (ClassNotFoundException e) {
+                    }
+                }
+            }
+            if (result == null) {
+                ClassLoader current = this.getClass().getClassLoader();
+                if (current instanceof FlexyClassLoaderImpl) {
+                    FlexyClassLoaderImpl currentCasted = (FlexyClassLoaderImpl) current;
+                    result = currentCasted.internal_loadClass(request);
+                } else {
+                    try {
+                        result = current.loadClass(request.className);
+                    } catch (ClassNotFoundException e) {
+                    }
+                }
             }
         }
         //If still not found and not system basic class, lets try again
@@ -297,7 +334,6 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
             try {
                 result = findSystemClass(request.className);
             } catch (ClassNotFoundException e) {
-                return null;
             }
         }
         return result;
@@ -424,132 +460,9 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         return Collections.enumeration(selfRes);
     }
 
-    public String cleanJarURL(String j) {
-        if (j.contains(File.separator)) {
-            return j.substring(j.lastIndexOf(File.separator) + 1);
-        } else {
-            return j;
-        }
-    }
-
-    public String getKCLDump() {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append("\tJar=" + cleanJarURL(classpathResources.getLastLoadedJar()) + "_" + hashCode() + "\n");
-        for (ClassLoader s : subClassLoaders) {
-            buffer.append("\t\tl->" + cleanJarURL((((FlexyClassLoaderImpl) s).classpathResources).getLastLoadedJar()) + "_" + s.hashCode() + "\n");
-        }
-        return buffer.toString();
-    }
-
-
-    @Override
-    public String toString() {
-        return cleanJarURL(classpathResources.getLastLoadedJar()) + hashCode();
-    }
-
-    /* Internal Loaders */
-    /*
-    class CurrentLoader extends ProxyClassLoader {
-        public CurrentLoader() {
-            order = 2;
-        }
-
-        @Override
-        public Class loadClass(KlassLoadRequest request) {
-            Class result = null;
-            try {
-                result = getClass().getClassLoader().loadClass(request.className);
-            } catch (ClassNotFoundException e) {
-                return null;
-            }
-            return result;
-        }
-
-        @Override
-        public InputStream loadResource(String name) {
-            InputStream isS = getClass().getClassLoader().getResourceAsStream(name);
-            if (isS != null) {
-                return isS;
-            }
-            return null;
-        }
-
-        @Override
-        public String getKey() {
-            return "Current " + getKey();
-        }
-
-    }*/
-
-    /*
-    class ThreadContextLoader extends ProxyClassLoader {
-        public ThreadContextLoader() {
-            order = 4;
-        }
-
-        @Override
-        public Class loadClass(KlassLoadRequest request) {
-            Class result = null;
-            try {
-                result = Thread.currentThread().getContextClassLoader().loadClass(request.className);
-            } catch (ClassNotFoundException e) {
-                return null;
-            }
-            return result;
-        }
-
-        @Override
-        public InputStream loadResource(String name) {
-            InputStream isS = Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
-            if (isS != null) {
-                return isS;
-            }
-            return null;
-        }
-
-        @Override
-        public String getKey() {
-            return "Thread " + getKey();
-        }
-
-    }*/
-
-    /*
-    class ParentLoader extends ProxyClassLoader {
-        public ParentLoader() {
-            order = 3;
-        }
-
-        @Override
-        public Class loadClass(KlassLoadRequest request) {
-            Class result;
-            try {
-                result = getParent().loadClass(request.className);
-            } catch (ClassNotFoundException e) {
-                return null;
-            }
-            return result;
-        }
-
-        public InputStream loadResource(String name) {
-            InputStream isS = getParent().getResourceAsStream(name);
-            if (isS != null) {
-                return isS;
-            }
-            return null;
-        }
-
-        @Override
-        public String getKey() {
-            return "Parent " + getKey();
-        }
-
-    }*/
-
     public URL getResource(String s) {
         return findResource(s);
     }
-
 
     private URL internal_getResource(String s) {
         if ((classpathResources).containResource(s)) {
@@ -586,7 +499,7 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
     }
 
     public String getKey() {
-        return toString();
+        return key;
     }
 
 

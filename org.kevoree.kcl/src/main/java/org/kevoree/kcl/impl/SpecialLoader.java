@@ -21,19 +21,10 @@ import java.io.InputStream;
  * Date: 18/10/12
  * Time: 15:10
  */
-public abstract class KevoreeResourcesLoader {
+public interface SpecialLoader {
 
-    private String extension = null;
+    public String getExtension();
 
-    public KevoreeResourcesLoader(String _extension){
-        extension = _extension;
-    }
-
-
-    public String getExtension() {
-        return extension;
-    }
-
-    public abstract void doLoad(String key,InputStream stream);
+    public void doLoad(String key, InputStream stream);
 
 }
