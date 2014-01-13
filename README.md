@@ -38,35 +38,27 @@ Then include this dependency in your project:
             <version>REPLACE_KCL_VERSION</version>
         </dependency>
         
-Current KCL version: 2 (depends on Kotlin 0.6.602)
+Current KCL version: 5
 
-Then in Java code you have two important class to now:
-- Klassloader: KCL API
-- KevoreeJarClassLoader: Default JAR ClassLoader Scope
+Then in Java code you have three important class to now:
+- FlexyClassLoader : API
+- FlexyClassLoaderFactory : Factory
 
 Through an example:
 
 
 ##### 1) Create an isolated scope: 
 	
-		Klassloader kclScope1 = new KevoreeJarClassLoader();
+		FlexyClassLoader kclScope1 = FlexyClassLoaderFactory.create();
 		
 ##### 2) Fill scope with classes:
 
 		//from plain Jar file
-		kclScope1.addJarFromURL("file://slf4j.jar");
+		kclScope1.load("file://slf4j.jar");
 		
 		//from direct stream must by .class or .jar or zip fie
-		kclScope1.addJarFromStream("http://...");
-		
-##### 3) Isolate or not from system classloader:
+		kclScope1.load("http://...");
 
-		//optional
-		//isolate the kclScope1 from system already loaded classes
-		//i.e. if you already have loading SLF4J in your bootclasspath
-		//and you want to avoid conficts.
-		kclScope1.isolateFromSystem();
-		
 ##### 4) Call classes from your scope:
 
 		Class cl1 = kclScope1.loadClass("org.slf4j.Logger");
@@ -74,14 +66,14 @@ Through an example:
 		
 ##### 5) Create another scope:
 
-		Klassloader kclScope2 = new KevoreeJarClassLoader();
-		kclScope2.addJarFromURL("file://yourCoreApp.jar");
+		FlexyClassLoader kclScope2 = FlexyClassLoaderFactory.create();
+		kclScope2.load("file://yourCoreApp.jar");
 		
 ##### 6) Link your main app with the needed SLF4J library:
 
 		//can be call dynamicallly at anytime
 		//removeChild also available
-		kclScope2.addChild(kclScope1);	
+		kclScope2.attachChild(kclScope1);	
 			
 		
 ##### 7) Run your app:
