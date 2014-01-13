@@ -72,7 +72,7 @@ Through an example:
 ##### 6) Link your main app with the needed SLF4J library:
 
 		//can be call dynamicallly at anytime
-		//removeChild also available
+		//detachChild also available
 		kclScope2.attachChild(kclScope1);	
 			
 		
