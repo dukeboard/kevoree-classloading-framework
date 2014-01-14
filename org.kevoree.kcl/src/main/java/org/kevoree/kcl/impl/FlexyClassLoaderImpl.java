@@ -25,11 +25,11 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         KlassLoadRequest request = new KlassLoadRequest();
         request.className = className;
         Class result = internal_loadClass(request);
-        if (result == null && Log.DEBUG) {
-            Log.debug("KCL Class not resolved " + className);
-            Log.debug("Passed FlexClassLoader, childs : " + getSubClassLoaders().size());
+        if (result == null && Log.TRACE) {
+            Log.trace("KCL Class not resolved " + className);
+            Log.trace("Passed FlexClassLoader, childs : " + getSubClassLoaders().size());
             for (String klassLoader : request.passedKlassLoader) {
-                Log.debug("-->" + klassLoader);
+                Log.trace("-->" + klassLoader);
             }
             throw new ClassNotFoundException(className);
         }
