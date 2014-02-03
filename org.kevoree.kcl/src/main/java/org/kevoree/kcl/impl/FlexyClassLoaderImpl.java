@@ -35,6 +35,7 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         }
         return result;
     }
+    /* End of Class Load specific engine */
 
 
     @Override
@@ -113,7 +114,7 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
     }
     /* End Special Loader management */
 
-    protected ArrayList<ClassLoader> subClassLoaders = new ArrayList<ClassLoader>();
+    protected ArrayList<FlexyClassLoader> subClassLoaders = new ArrayList<FlexyClassLoader>();
 
     public void cleanupLinks(ClassLoader c) {
         //TODO CHECK USED
@@ -133,27 +134,6 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         return classNameT;
     }
 
-    public List<URL> getLoadedURLs() {
-        return classpathResources.getLoadedURLs();
-    }
-
-    public List<URL> getLinkedLoadedURLs() {
-        List<URL> resultURL = new ArrayList<URL>();
-        ArrayList<ClassLoader> alreadyPassed = new ArrayList<ClassLoader>();
-        internal_getAllLoadedURLs(resultURL, alreadyPassed);
-        return resultURL;
-    }
-
-    private void internal_getAllLoadedURLs(List<URL> res, List<ClassLoader> cls) {
-        cls.add(this);
-        res.addAll((classpathResources).getLoadedURLs());
-        for (ClassLoader l : subClassLoaders) {
-            if (l instanceof FlexyClassLoaderImpl && !cls.contains(l)) {
-                ((FlexyClassLoaderImpl) l).internal_getAllLoadedURLs(res, cls);
-            }
-        }
-    }
-
     private boolean locked = false;
 
     public void lockLinks() {
@@ -164,7 +144,7 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         (classpathResources).setLazyLoad(lazyload);
     }
 
-    public List<ClassLoader> getSubClassLoaders() {
+    public List<FlexyClassLoader> getSubClassLoaders() {
         return subClassLoaders;
     }
 
@@ -187,7 +167,7 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         return findLoadedClass(className);
     }
 
-    public Class internal_defineClass(String className, byte[] bytes) {
+    protected Class internal_defineClass(String className, byte[] bytes) {
         if (className.contains(".")) {
             String packageName = className.substring(0, className.lastIndexOf('.'));
             if (getPackage(packageName) == null) {
@@ -201,12 +181,12 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         return defineClass(className, bytes, 0, bytes.length);
     }
 
-    private Comparator scoreSorter = new Comparator<ClassLoader>() {
+    private Comparator scoreSorter = new Comparator<FlexyClassLoader>() {
         public boolean equals(Object p0) {
             throw new UnsupportedOperationException();
         }
 
-        public int compare(ClassLoader p0, ClassLoader p1) {
+        public int compare(FlexyClassLoader p0, FlexyClassLoader p1) {
             if (getScore(p0) == getScore(p1)) {
                 return 0;
             }
@@ -341,45 +321,30 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
 
 
     public InputStream getResourceAsStream(String name) {
-        InputStream resolved = internal_getResourceAsStream(name);
-        if (resolved != null) {
-            return resolved;
+        FlexyClassLoaderImpl resolved = resourceOwnerResolution(name);
+        if(resolved != null){
+            return resolved.internal_getResourceAsStream(name);
+        } else {
+            return null;
         }
-        for (ClassLoader sub : subClassLoaders) {
-            if (sub instanceof FlexyClassLoaderImpl) {
-                resolved = ((FlexyClassLoaderImpl) sub).internal_getResourceAsStream(name);
-            } else {
-                resolved = sub.getResourceAsStream(name);
-            }
-            if (resolved != null) {
-                return resolved;
-            }
-        }
-        return resolved;
     }
 
 
     @Override
-    protected URL findResource(String s) {
-        URL urlInternal = internal_getResource(s);
-        if (urlInternal == null) {
-            for (ClassLoader sub : subClassLoaders) {
-                if (sub instanceof FlexyClassLoaderImpl) {
-                    urlInternal = ((FlexyClassLoaderImpl) sub).internal_getResource(s);
-                } else {
-                    urlInternal = sub.getResource(s);
-                }
-                if (urlInternal != null) {
-                    return urlInternal;
-                }
-            }
-            return null;
+    protected URL findResource(String name) {
+        FlexyClassLoaderImpl resolved = resourceOwnerResolution(name);
+        if(resolved != null){
+            return resolved.internal_getResource(name);
         } else {
-            return urlInternal;
+            return null;
         }
     }
 
-    private InputStream internal_getResourceAsStream(String name) {
+    public URL getResource(String s) {
+        return findResource(s);
+    }
+
+    protected InputStream internal_getResourceAsStream(String name) {
         if (name.endsWith(".class")) {
             byte[] res = null;
             if (name != null) {
@@ -402,6 +367,34 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
             }
         } else {
             //STRANGE ERROR
+            return null;
+        }
+    }
+
+    protected URL internal_getResource(String s) {
+        if ((classpathResources).containResource(s)) {
+            if ((classpathResources).getResourceURL(s).toString().startsWith("file:kclstream:")) {
+                String cleanName;
+                if (s.contains("/")) {
+                    cleanName = s.substring(s.lastIndexOf("/") + 1);
+                } else {
+                    cleanName = s;
+                }
+                try {
+                    File tFile = File.createTempFile("dummy_kcl_temp", cleanName);
+                    tFile.deleteOnExit();
+                    FileOutputStream tWriter = new FileOutputStream(tFile);
+                    tWriter.write((classpathResources).getResourceContent((classpathResources).getResourceURL(s)));
+                    tWriter.close();
+                    return new URL("file:///" + tFile.getAbsolutePath());
+                } catch (Exception e) {
+                    return null;
+                }
+            } else {
+                //SIMPLY RETURN URL
+                return (classpathResources).getResourceURL(s);
+            }
+        } else {
             return null;
         }
     }
@@ -439,6 +432,7 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         }
     }
 
+
     @Override
     public java.util.Enumeration<URL> findResources(String p1) throws IOException {
         List<URL> selfRes = internal_findResources(p1);
@@ -460,38 +454,7 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         return Collections.enumeration(selfRes);
     }
 
-    public URL getResource(String s) {
-        return findResource(s);
-    }
-
-    private URL internal_getResource(String s) {
-        if ((classpathResources).containResource(s)) {
-            if ((classpathResources).getResourceURL(s).toString().startsWith("file:kclstream:")) {
-                String cleanName;
-                if (s.contains("/")) {
-                    cleanName = s.substring(s.lastIndexOf("/") + 1);
-                } else {
-                    cleanName = s;
-                }
-                try {
-                    File tFile = File.createTempFile("dummy_kcl_temp", cleanName);
-                    tFile.deleteOnExit();
-                    FileOutputStream tWriter = new FileOutputStream(tFile);
-                    tWriter.write((classpathResources).getResourceContent((classpathResources).getResourceURL(s)));
-                    tWriter.close();
-                    return new URL("file:///" + tFile.getAbsolutePath());
-                } catch (Exception e) {
-                    return null;
-                }
-            } else {
-                //SIMPLY RETURN URL
-                return (classpathResources).getResourceURL(s);
-            }
-        } else {
-            return null;
-        }
-    }
-
+    /* Key Management */
     private String key = UUID.randomUUID().toString();
 
     public void setKey(String k) {
@@ -502,5 +465,31 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         return key;
     }
 
+
+    private FlexyClassLoaderImpl resourceOwnerResolution(String name) {
+        KlassLoadRequest request = new KlassLoadRequest();
+        request.className = name;
+        return graphResourceOwnerResolution(request);
+    }
+
+    public FlexyClassLoaderImpl graphResourceOwnerResolution(KlassLoadRequest request) {
+        request.passedKlassLoader.add(this.getKey());
+        if ((classpathResources).containResource(request.className)) {
+            return this;
+        }
+        Collections.sort(subClassLoaders, scoreSorter);
+        FlexyClassLoaderImpl result = null;
+        for (FlexyClassLoader subCL : subClassLoaders) {
+            if (!request.passedKlassLoader.contains((subCL).getKey())) {
+                FlexyClassLoaderImpl subKCL = (FlexyClassLoaderImpl) subCL;
+                result = subKCL.graphResourceOwnerResolution(request);
+            }
+            if (result != null) {
+                incScore(subCL);
+                return result;
+            }
+        }
+        return null;
+    }
 
 }

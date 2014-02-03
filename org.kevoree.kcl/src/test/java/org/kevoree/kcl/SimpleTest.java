@@ -7,6 +7,7 @@ import org.kevoree.kcl.impl.FlexyClassLoaderImpl;
 import org.kevoree.log.Log;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Created with IntelliJ IDEA.
@@ -59,6 +60,11 @@ public class SimpleTest {
         Class resolvedLogClassTransitive = systemEnabledKCL.loadClass(Log.class.getName());
         //assert (resolvedLogClassTransitive.getClassLoader().equals(jarLog)); // Log class should be resolved from the new KCL
         //TEst the transitive link
+
+
+        InputStream stream = systemEnabledKCL.getResourceAsStream("META-INF/maven/org.kevoree.kcl/org.kevoree.kcl/pom.xml");
+        System.out.println(stream);
+
     }
 
 }
