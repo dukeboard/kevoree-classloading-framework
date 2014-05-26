@@ -18,9 +18,6 @@ public abstract class FlexyClassLoader extends ClassLoader {
     /* Load content from stream */
     public abstract void load(InputStream child) throws IOException;
 
-    /* Load content from url */
-    public abstract void load(URL child) throws IOException;
-
     public ResolutionPriority resolutionPriority = ResolutionPriority.CHILDS;
 
     public abstract String getKey();

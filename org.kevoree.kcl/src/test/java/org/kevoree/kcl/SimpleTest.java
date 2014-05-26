@@ -30,7 +30,6 @@ public class SimpleTest {
 
         Class resolvedLogClass = jar.loadClass(Log.class.getName());
         assert (!resolvedLogClass.getClassLoader().equals(jar)); // Log class should be resolved from the System ClassLoader nor the new KCL (no binding)
-
     }
 
     @Test

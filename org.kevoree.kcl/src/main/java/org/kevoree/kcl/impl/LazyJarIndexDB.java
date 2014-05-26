@@ -1,8 +1,10 @@
 package org.kevoree.kcl.impl;
 
+import org.kevoree.kcl.api.IndexDB;
 import org.kevoree.log.Log;
 
 import java.io.*;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,21 +16,12 @@ import java.util.jar.JarInputStream;
 /**
  * Created by duke on 12/01/2014.
  */
-public class KevoreeLazyJarResources {
+public class LazyJarIndexDB implements IndexDB {
 
     private FlexyClassLoaderImpl parent;
 
-    public KevoreeLazyJarResources(FlexyClassLoaderImpl p) {
+    public LazyJarIndexDB(FlexyClassLoaderImpl p) {
         this.parent = p;
-    }
-
-    public byte[] getResource(String name) {
-        try {
-            return getJarEntryContents(name);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
     }
 
     Map<String, byte[]> jarEntryContents = new HashMap<String, byte[]>();
@@ -55,8 +48,22 @@ public class KevoreeLazyJarResources {
         }
     }
 
-    public void loadJar(InputStream jarStream) throws IOException {
-        loadJar(jarStream, null);
+    public void loadJar(InputStream jarStream) {
+        try {
+            loadJar(jarStream, null);
+        } catch (IOException e) {
+            Log.error("", e);
+        }
+    }
+
+    @Override
+    public URL getURL(String name) {
+        return getResourceURL(name);
+    }
+
+    @Override
+    public List<URL> getURLS(String name) {
+        return getResourceURLS(name);
     }
 
     public void loadJar(URL url) throws IOException {
@@ -76,34 +83,15 @@ public class KevoreeLazyJarResources {
         }
     }
 
-    public void loadJar(String jarFile) throws IOException {
-        FileInputStream fis = null;
-        try {
-            File f = new File(jarFile);
-            fis = new FileInputStream(jarFile);
-            URL url = new URL("file:" + f.getAbsolutePath());
-            lastLoadedJars.add(url);
-            loadJar(fis, url);
-        } finally {
-            if (fis != null) {
-                try {
-                    fis.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
     public List<URL> getResourceURLS(String name) {
-        if (containResource(name)) {
+        if (contains(name)) {
             return detectedResourcesURL.get(name);
         } else {
             return new ArrayList<URL>();
         }
     }
 
-    public boolean containResource(String name) {
+    public boolean contains(String name) {
         if (detectedResourcesURL.get(name) != null) {
             return !detectedResourcesURL.get(name).isEmpty();
         } else {
@@ -112,7 +100,7 @@ public class KevoreeLazyJarResources {
     }
 
     public URL getResourceURL(String name) {
-        if (containResource(name)) {
+        if (contains(name)) {
             return detectedResourcesURL.get(name).get(0);
         } else {
             return null;
@@ -297,5 +285,55 @@ public class KevoreeLazyJarResources {
             }
         }
     }
+
+    @Override
+    public byte[] get(String name) {
+        try {
+            return getJarEntryContents(name);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public byte[] get(URL name) {
+        return getResourceContent(name);
+    }
+
+    @Override
+    public void set(String name, byte[] payload) {
+
+    }
+
+    @Override
+    public void loadJar(File jarFile) {
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(jarFile);
+            URL url = new URL("file:" + jarFile.getAbsolutePath());
+            lastLoadedJars.add(url);
+            loadJar(fis, url);
+        } catch (FileNotFoundException e) {
+            Log.error("", e);
+        } catch (MalformedURLException e) {
+            Log.error("", e);
+        } catch (IOException e) {
+            Log.error("", e);
+        } finally {
+            if (fis != null) {
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public void loadJar(String jarFile) {
+        loadJar(new File(jarFile));
+    }
+
 
 }

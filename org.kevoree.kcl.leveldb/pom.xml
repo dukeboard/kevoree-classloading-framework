@@ -1,16 +1,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>org.kevoree.kcl</artifactId>
+    <artifactId>org.kevoree.kcl.leveldb</artifactId>
     <packaging>jar</packaging>
-    <name>Kevoree :: KlassLoader</name>
+    <name>Kevoree :: KlassLoader :: LevelDB</name>
 
-    <version>8</version>
+    <version>8-SNAPSHOT</version>
 
     <parent>
         <artifactId>org.kevoree.kcl.root</artifactId>
         <groupId>org.kevoree.kcl</groupId>
-        <version>8</version>
+        <version>8-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -19,6 +19,16 @@
             <groupId>org.kevoree.log</groupId>
             <artifactId>org.kevoree.log</artifactId>
             <version>${kevoree.log.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.kevoree.kcl</groupId>
+            <artifactId>org.kevoree.kcl</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.fusesource.leveldbjni</groupId>
+            <artifactId>leveldbjni-all</artifactId>
+            <version>1.7</version>
         </dependency>
     </dependencies>
 
