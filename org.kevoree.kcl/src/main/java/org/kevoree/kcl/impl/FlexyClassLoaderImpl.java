@@ -15,9 +15,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class FlexyClassLoaderImpl extends FlexyClassLoader {
 
-    /* Hask to inject alternative Implementation */
-    public Map<String, Class> alternatives = new HashMap<String, Class>();
-
     /* ClassLoader overridden methods */
     @Override
     public Class loadClass(String className) throws ClassNotFoundException {
@@ -26,10 +23,6 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
 
     @Override
     public Class loadClass(String className, boolean resolveIt) throws ClassNotFoundException {
-        if (alternatives.containsKey(className)) {
-            return alternatives.get(className);
-        }
-
         KlassLoadRequest request = new KlassLoadRequest();
         request.className = className;
         Class result = internal_loadClass(request);
