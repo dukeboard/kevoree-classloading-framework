@@ -4,6 +4,7 @@ import org.kevoree.kcl.api.FlexyClassLoader;
 import org.kevoree.resolver.MavenResolver;
 
 import java.io.File;
+import java.io.InputStream;
 
 /**
  * Created by duke on 8/12/14.
@@ -26,5 +27,7 @@ public interface KevoreeKernel {
     public java.util.Collection<FlexyClassLoader> getClassLoaders();
 
     public boolean boot();
+
+    public boolean boot(InputStream is);
 
 }

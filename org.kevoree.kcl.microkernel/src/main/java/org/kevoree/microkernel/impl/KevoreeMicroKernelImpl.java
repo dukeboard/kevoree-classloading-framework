@@ -104,6 +104,16 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
     public boolean boot() {
         try {
             InputStream is = this.getClass().getClassLoader().getResourceAsStream("KEV-INF/bootinfo");
+            return boot(is);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public boolean boot(InputStream is) {
+        try {
             BootInfo bootInfo = BootInfoBuilder.read(is);
             //we install deploy units
             for (BootInfoLine line : bootInfo.getLines()) {
