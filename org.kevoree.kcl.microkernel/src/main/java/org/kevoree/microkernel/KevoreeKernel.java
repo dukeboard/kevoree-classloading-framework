@@ -27,12 +27,14 @@ public interface KevoreeKernel {
 
     public java.util.Collection<FlexyClassLoader> getClassLoaders();
 
-    public boolean boot();
+    public void boot();
 
-    public boolean boot(InputStream is);
+    public void boot(InputStream is);
     
     public Set<String> getReleaseURLS();
 
     public Set<String> getSnapshotURLS();
+
+    public static final ThreadLocal<KevoreeKernel> self = new ThreadLocal<KevoreeKernel>();
 
 }

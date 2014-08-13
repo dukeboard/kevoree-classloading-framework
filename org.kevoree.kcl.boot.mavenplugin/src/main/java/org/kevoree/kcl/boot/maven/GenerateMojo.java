@@ -14,13 +14,11 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.dependency.tree.DependencyNode;
 import org.apache.maven.shared.dependency.tree.DependencyTreeBuilder;
-import org.apache.maven.shared.dependency.tree.DependencyTreeBuilderException;
 import org.apache.maven.shared.dependency.tree.traversal.DependencyNodeVisitor;
 import org.kevoree.microkernel.impl.BootInfoImpl;
 import org.kevoree.microkernel.impl.BootInfoLineImpl;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,8 +42,11 @@ public class GenerateMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.build.directory}/classes")
     private File outputClasses;
 
+    @Parameter
+    public String main;
+
     public String buildKey(Artifact a) {
-        return "mvn:"+a.getGroupId() + ":" + a.getArtifactId() + ":" + a.getBaseVersion();
+        return "mvn:" + a.getGroupId() + ":" + a.getArtifactId() + ":" + a.getBaseVersion();
     }
 
     @Override
@@ -76,6 +77,9 @@ public class GenerateMojo extends AbstractMojo {
                     return true;
                 }
             });
+            if (main != null) {
+                bootInfo.setMain(main);
+            }
             new File(outputClasses.getPath() + File.separator + "KEV-INF").mkdirs();
             File fileJSON = new File(outputClasses.getPath() + File.separator + "KEV-INF" + File.separator + "bootinfo");
             FileWriter fout = new FileWriter(fileJSON);
@@ -85,7 +89,6 @@ public class GenerateMojo extends AbstractMojo {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
 
 
     }

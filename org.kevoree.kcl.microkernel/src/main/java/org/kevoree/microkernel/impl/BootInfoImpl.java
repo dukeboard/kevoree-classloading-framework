@@ -18,9 +18,24 @@ public class BootInfoImpl implements BootInfo {
         return lines;
     }
 
+    private String main;
+
+    @Override
+    public String getMain() {
+        return main;
+    }
+
+    @Override
+    public void setMain(String m) {
+        main=m;
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
+        if (main != null) {
+            builder.append("main " + main + "\n");
+        }
         for (BootInfoLine line : lines) {
             builder.append(line.toString());
             builder.append("\n");

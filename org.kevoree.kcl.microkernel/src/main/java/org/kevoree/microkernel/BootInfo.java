@@ -9,4 +9,8 @@ public interface BootInfo {
 
     List<BootInfoLine> getLines();
 
+    String getMain();
+
+    void setMain(String m);
+
 }

@@ -15,16 +15,20 @@ public class BootInfoBuilder {
         try {
             String line = bis.readLine();
             while (line != null) {
-                BootInfoLineImpl bootInfoLine = new BootInfoLineImpl();
-                //DO code
-                String[] elems = line.split(",");
-                if (elems.length > 0) {
-                    bootInfoLine.setUrl(elems[0]);
-                    for (int i = 1; i < elems.length; i++) {
-                        bootInfoLine.getDependencies().add(elems[i]);
+                if (line.startsWith("main ")) {
+                    impl.setMain(line.substring(5).trim());
+                } else {
+                    BootInfoLineImpl bootInfoLine = new BootInfoLineImpl();
+                    //DO code
+                    String[] elems = line.split(",");
+                    if (elems.length > 0) {
+                        bootInfoLine.setUrl(elems[0]);
+                        for (int i = 1; i < elems.length; i++) {
+                            bootInfoLine.getDependencies().add(elems[i]);
+                        }
                     }
+                    impl.getLines().add(bootInfoLine);
                 }
-                impl.getLines().add(bootInfoLine);
                 line = bis.readLine();
             }
         } catch (IOException e) {
@@ -35,7 +39,7 @@ public class BootInfoBuilder {
 
     public static void main(String[] args) {
         System.out.println("Test Boot");
-        System.out.println(read(new ByteArrayInputStream("a\nb,c,d\nt\nc,4".getBytes())));
+        System.out.println(read(new ByteArrayInputStream("main titi\na\nb,c,d\nt\nc,4".getBytes())));
     }
 
 }

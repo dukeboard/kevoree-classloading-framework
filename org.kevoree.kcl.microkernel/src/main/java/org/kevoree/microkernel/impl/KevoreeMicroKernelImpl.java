@@ -13,6 +13,7 @@ import org.kevoree.resolver.MavenResolver;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -68,14 +69,14 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
         classloaders.remove(key);
     }
 
-    public Set<String> getSnapshotURLS(){
+    public Set<String> getSnapshotURLS() {
         Set<String> inUseURLS = new HashSet<String>();
         inUseURLS.add(ossURL);
         inUseURLS.add(centralURL);
         return inUseURLS;
     }
 
-    public Set<String> getReleaseURLS(){
+    public Set<String> getReleaseURLS() {
         Set<String> inUseURLS = new HashSet<String>();
         inUseURLS.add(centralURL);
         return inUseURLS;
@@ -112,20 +113,19 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
     }
 
     @Override
-    public boolean boot() {
+    public void boot() {
         try {
             InputStream is = this.getClass().getClassLoader().getResourceAsStream("KEV-INF/bootinfo");
-            return boot(is);
+            boot(is);
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
         }
     }
 
     @Override
-    public boolean boot(InputStream is) {
+    public void boot(InputStream is) {
         try {
-            BootInfo bootInfo = BootInfoBuilder.read(is);
+            final BootInfo bootInfo = BootInfoBuilder.read(is);
             //we install deploy units
             for (BootInfoLine line : bootInfo.getLines()) {
                 if (get(line.getURL()) == null) {
@@ -144,12 +144,35 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
                 FlexyClassLoaderImpl kcl = (FlexyClassLoaderImpl) get(line.getURL());
                 kcl.lockLinks();
             }
-            return true;
+            if (bootInfo.getMain() != null) {
+                for (final FlexyClassLoader loader : getClassLoaders()) {
+                    try {
+                        final KevoreeKernel self = this;
+                        Thread t = new Thread() {
+                            @Override
+                            public void run() {
+                                Thread.currentThread().setContextClassLoader(loader);
+                                KevoreeKernel.self.set(self);
+                                try {
+                                    Class cls = loader.loadClass(bootInfo.getMain());
+                                    Method meth = cls.getMethod("main", String[].class);
+                                    String[] params = new String[0];
+                                    meth.invoke(null, (Object) params);
+                                } catch (Exception e) {
+                                    //e.printStackTrace();
+                                }
+                            }
+                        };
+                        t.start();
+                        t.join();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
         }
     }
-
 
 }
