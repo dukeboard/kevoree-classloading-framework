@@ -2,6 +2,7 @@ package org.kevoree.microkernel.impl;
 
 import org.kevoree.kcl.api.FlexyClassLoader;
 import org.kevoree.kcl.api.FlexyClassLoaderFactory;
+import org.kevoree.kcl.api.ResolutionPriority;
 import org.kevoree.kcl.impl.FlexyClassLoaderImpl;
 import org.kevoree.log.Log;
 import org.kevoree.microkernel.BootInfo;
@@ -48,6 +49,7 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
             return cached;
         }
         FlexyClassLoader newKCL = FlexyClassLoaderFactory.INSTANCE.create();
+        newKCL.resolutionPriority = ResolutionPriority.CHILDS;
         newKCL.setKey(key);
         try {
             FileInputStream fop = new FileInputStream(in);
@@ -66,6 +68,19 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
         classloaders.remove(key);
     }
 
+    public Set<String> getSnapshotURLS(){
+        Set<String> inUseURLS = new HashSet<String>();
+        inUseURLS.add(ossURL);
+        inUseURLS.add(centralURL);
+        return inUseURLS;
+    }
+
+    public Set<String> getReleaseURLS(){
+        Set<String> inUseURLS = new HashSet<String>();
+        inUseURLS.add(centralURL);
+        return inUseURLS;
+    }
+
     @Override
     public FlexyClassLoader install(String key, String mavenURL) {
         FlexyClassLoader cached = get(key);
@@ -74,14 +89,10 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
         }
         File resolved;
         if (mavenURL.endsWith("SNAPSHOT")) {
-            Set<String> inUseURLS = new HashSet<String>();
-            inUseURLS.add(ossURL);
-            inUseURLS.add(centralURL);
-            resolved = resolver.resolve(mavenURL, inUseURLS);
+            resolved = resolver.resolve(mavenURL, getSnapshotURLS());
         } else {
-            Set<String> inUseURLS = new HashSet<String>();
-            inUseURLS.add(centralURL);
-            resolved = resolver.resolve(mavenURL, inUseURLS);
+
+            resolved = resolver.resolve(mavenURL, getReleaseURLS());
         }
         if (resolved != null) {
             return put(key, resolved);

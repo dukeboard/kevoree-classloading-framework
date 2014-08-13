@@ -5,6 +5,7 @@ import org.kevoree.resolver.MavenResolver;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.Set;
 
 /**
  * Created by duke on 8/12/14.
@@ -29,5 +30,9 @@ public interface KevoreeKernel {
     public boolean boot();
 
     public boolean boot(InputStream is);
+    
+    public Set<String> getReleaseURLS();
+
+    public Set<String> getSnapshotURLS();
 
 }
