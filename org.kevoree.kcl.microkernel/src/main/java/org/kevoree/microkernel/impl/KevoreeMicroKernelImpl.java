@@ -57,7 +57,6 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
             Log.error("Error while open param file in KevoreeMicroKernel", e);
             return null;
         }
-        System.out.println("->" + key);
         classloaders.put(key, newKCL);
         return newKCL;
     }
@@ -106,16 +105,23 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
         try {
             InputStream is = this.getClass().getClassLoader().getResourceAsStream("KEV-INF/bootinfo");
             BootInfo bootInfo = BootInfoBuilder.read(is);
+            //we install deploy units
             for (BootInfoLine line : bootInfo.getLines()) {
                 if (get(line.getURL()) == null) {
                     install(line.getURL(), line.getURL());
                 }
             }
+            //we link everything
             for (BootInfoLine line : bootInfo.getLines()) {
                 FlexyClassLoader kcl = get(line.getURL());
                 for (String dep : line.getDependencies()) {
                     kcl.attachChild(get(dep));
                 }
+            }
+            //finally we lock everything to avoid to kill Kevoree from outside
+            for (BootInfoLine line : bootInfo.getLines()) {
+                FlexyClassLoaderImpl kcl = (FlexyClassLoaderImpl) get(line.getURL());
+                kcl.lockLinks();
             }
             return true;
         } catch (Exception e) {
