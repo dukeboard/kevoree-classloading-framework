@@ -27,14 +27,14 @@ public class BootInfoImpl implements BootInfo {
 
     @Override
     public void setMain(String m) {
-        main=m;
+        main = m;
     }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
         if (main != null) {
-            builder.append("main " + main + "\n");
+            builder.append(mainLineIdentifier + " " + main + "\n");
         }
         for (BootInfoLine line : lines) {
             builder.append(line.toString());

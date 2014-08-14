@@ -15,7 +15,7 @@ public class BootInfoBuilder {
         try {
             String line = bis.readLine();
             while (line != null) {
-                if (line.startsWith("main ")) {
+                if (line.startsWith(BootInfoImpl.mainLineIdentifier)) {
                     impl.setMain(line.substring(5).trim());
                 } else {
                     BootInfoLineImpl bootInfoLine = new BootInfoLineImpl();

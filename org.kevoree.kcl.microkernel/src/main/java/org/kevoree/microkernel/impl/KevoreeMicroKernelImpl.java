@@ -2,7 +2,6 @@ package org.kevoree.microkernel.impl;
 
 import org.kevoree.kcl.api.FlexyClassLoader;
 import org.kevoree.kcl.api.FlexyClassLoaderFactory;
-import org.kevoree.kcl.api.ResolutionPriority;
 import org.kevoree.kcl.impl.FlexyClassLoaderImpl;
 import org.kevoree.log.Log;
 import org.kevoree.microkernel.BootInfo;
@@ -50,7 +49,7 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
             return cached;
         }
         FlexyClassLoader newKCL = FlexyClassLoaderFactory.INSTANCE.create();
-        newKCL.resolutionPriority = ResolutionPriority.CHILDS;
+        //newKCL.resolutionPriority = ResolutionPriority.CHILDS;
         newKCL.setKey(key);
         try {
             FileInputStream fop = new FileInputStream(in);
@@ -66,7 +65,15 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
 
     @Override
     public void drop(String key) {
-        classloaders.remove(key);
+        FlexyClassLoaderImpl kcl = (FlexyClassLoaderImpl) classloaders.get(key);
+        if (kcl.isLocked()) {
+            return;
+        } else {
+            classloaders.remove(key);
+            for (FlexyClassLoader subs : getClassLoaders()) {
+                subs.detachChild(kcl);
+            }
+        }
     }
 
     public Set<String> getSnapshotURLS() {

@@ -13,4 +13,6 @@ public interface BootInfo {
 
     void setMain(String m);
 
+    public static final String mainLineIdentifier = "main";
+
 }

@@ -138,6 +138,10 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         locked = true;
     }
 
+    public boolean isLocked() {
+        return locked;
+    }
+
     public List<FlexyClassLoader> getSubClassLoaders() {
         return subClassLoaders;
     }
