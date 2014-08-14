@@ -33,6 +33,15 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
                 for (String klassLoader : request.passedKlassLoader) {
                     Log.trace("-->" + klassLoader);
                 }
+                if (Thread.currentThread().getContextClassLoader() instanceof FlexyClassLoader) {
+                    Log.trace("Thread current KCL: {}", ((FlexyClassLoader) Thread.currentThread().getContextClassLoader()).getKey());
+                } else {
+                    if(Thread.currentThread().getContextClassLoader() != null){
+                        Log.trace("Thread current : {}", Thread.currentThread().getContextClassLoader().toString());
+                    } else {
+                        Log.trace("Thread current CL is null !");
+                    }
+                }
             }
             throw new ClassNotFoundException(className);
         }
