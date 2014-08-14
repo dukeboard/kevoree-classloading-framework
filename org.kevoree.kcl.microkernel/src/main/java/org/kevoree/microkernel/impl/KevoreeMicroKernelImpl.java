@@ -2,6 +2,7 @@ package org.kevoree.microkernel.impl;
 
 import org.kevoree.kcl.api.FlexyClassLoader;
 import org.kevoree.kcl.api.FlexyClassLoaderFactory;
+import org.kevoree.kcl.api.ResolutionPriority;
 import org.kevoree.kcl.impl.FlexyClassLoaderImpl;
 import org.kevoree.log.Log;
 import org.kevoree.microkernel.BootInfo;
@@ -32,6 +33,7 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
 
     public KevoreeMicroKernelImpl() {
         system.lockLinks();
+        system.setKey("kcl://system");
     }
 
     @Override
@@ -49,7 +51,7 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
             return cached;
         }
         FlexyClassLoader newKCL = FlexyClassLoaderFactory.INSTANCE.create();
-        //newKCL.resolutionPriority = ResolutionPriority.CHILDS;
+        newKCL.resolutionPriority = ResolutionPriority.CHILDS;
         newKCL.setKey(key);
         try {
             FileInputStream fop = new FileInputStream(in);
@@ -91,6 +93,9 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
 
     @Override
     public FlexyClassLoader install(String key, String mavenURL) {
+        if (mavenURL.equals(system.getKey())) {
+            classloaders.put(key, system);
+        }
         FlexyClassLoader cached = get(key);
         if (cached != null) {
             return cached;
@@ -152,28 +157,37 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
                 kcl.lockLinks();
             }
             if (bootInfo.getMain() != null) {
+                final Boolean[] resl = new Boolean[1];
+                resl[0] = false;
                 for (final FlexyClassLoader loader : getClassLoaders()) {
-                    try {
-                        final KevoreeKernel self = this;
-                        Thread t = new Thread() {
-                            @Override
-                            public void run() {
-                                Thread.currentThread().setContextClassLoader(loader);
-                                KevoreeKernel.self.set(self);
-                                try {
-                                    Class cls = loader.loadClass(bootInfo.getMain());
-                                    Method meth = cls.getMethod("main", String[].class);
-                                    String[] params = new String[0];
-                                    meth.invoke(null, (Object) params);
-                                } catch (Exception e) {
-                                    //e.printStackTrace();
+                    if (!resl[0]) {
+                        try {
+                            final KevoreeKernel self = this;
+                            Thread t = new Thread() {
+                                @Override
+                                public void run() {
+                                    Thread.currentThread().setContextClassLoader(loader);
+                                    KevoreeKernel.self.set(self);
+                                    try {
+                                        Class cls = loader.loadClass(bootInfo.getMain());
+                                        Method meth = cls.getMethod("main", String[].class);
+                                        String[] params = new String[0];
+                                        meth.invoke(null, (Object) params);
+                                        resl[0] = true;
+                                    } catch (java.lang.ClassNotFoundException e) {
+                                        resl[0] = false;
+                                        //NOP, we are looking for all
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                        resl[0] = true; //we still have tried, so quite boot mode
+                                    }
                                 }
-                            }
-                        };
-                        t.start();
-                        t.join();
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                            };
+                            t.start();
+                            t.join();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }

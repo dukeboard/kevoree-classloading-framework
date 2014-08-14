@@ -44,6 +44,25 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
                 }
             }
             throw new ClassNotFoundException(className);
+        } else {
+            /*
+            if (Log.TRACE) {
+                Log.trace("KCL Class resolved " + className + " from " + this.key);
+                Log.trace("Passed FlexClassLoader, childs : " + getSubClassLoaders().size());
+                for (String klassLoader : request.passedKlassLoader) {
+                    Log.trace("-->" + klassLoader);
+                }
+                if (Thread.currentThread().getContextClassLoader() instanceof FlexyClassLoader) {
+                    Log.trace("Thread current KCL: {}", ((FlexyClassLoader) Thread.currentThread().getContextClassLoader()).getKey());
+                } else {
+                    if(Thread.currentThread().getContextClassLoader() != null){
+                        Log.trace("Thread current : {}", Thread.currentThread().getContextClassLoader().toString());
+                    } else {
+                        Log.trace("Thread current CL is null !");
+                    }
+                }
+            }
+            */
         }
         return result;
     }
