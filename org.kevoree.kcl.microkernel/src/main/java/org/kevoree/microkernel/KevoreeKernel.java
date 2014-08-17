@@ -37,4 +37,5 @@ public interface KevoreeKernel {
 
     public static final ThreadLocal<KevoreeKernel> self = new ThreadLocal<KevoreeKernel>();
 
+    void boot(BootInfo bootInfo);
 }

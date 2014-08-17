@@ -136,8 +136,14 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
 
     @Override
     public void boot(InputStream is) {
+        final BootInfo bootInfo = BootInfoBuilder.read(is);
+        boot(bootInfo);
+    }
+
+
+    @Override
+    public void boot(final BootInfo bootInfo) {
         try {
-            final BootInfo bootInfo = BootInfoBuilder.read(is);
             //we install deploy units
             for (BootInfoLine line : bootInfo.getLines()) {
                 if (get(line.getURL()) == null) {
