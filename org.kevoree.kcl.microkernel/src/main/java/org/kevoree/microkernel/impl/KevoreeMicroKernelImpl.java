@@ -181,7 +181,12 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
                 FlexyClassLoader kcl = get(line.getURL());
                 for (String dep : line.getDependencies()) {
                     Log.trace("Link {} -> {}", kcl.getKey(), dep);
-                    kcl.attachChild(get(dep));
+                    FlexyClassLoader resolvedDep = get(dep);
+                    if(resolvedDep == null){
+                        Log.warn("Error during boot sequence dependency {} cannot be linked to {}",dep,kcl.getKey());
+                    } else {
+                        kcl.attachChild(resolvedDep);
+                    }
                 }
             }
             //finally we lock everything to avoid to kill Kevoree from outside
