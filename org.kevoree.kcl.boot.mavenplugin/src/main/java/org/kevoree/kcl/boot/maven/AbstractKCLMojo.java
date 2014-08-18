@@ -55,7 +55,9 @@ public abstract class AbstractKCLMojo extends org.apache.maven.plugin.AbstractMo
                         BootInfoLineImpl bootInfoLine = new BootInfoLineImpl();
                         bootInfoLine.setUrl(key);
                         for (DependencyNode child : dependencyNode.getChildren()) {
-                            bootInfoLine.getDependencies().add(buildKey(child.getArtifact()));
+                            if (!"test".equalsIgnoreCase(child.getArtifact().getScope())) {
+                                bootInfoLine.getDependencies().add(buildKey(child.getArtifact()));
+                            }
                         }
                         bootInfo.getLines().add(bootInfoLine);
                     }

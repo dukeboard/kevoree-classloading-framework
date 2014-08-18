@@ -368,7 +368,7 @@ public class LazyJarIndexDB implements IndexDB {
 
                 String absPath = file.getAbsolutePath();
                 absPath = absPath.replace(base, "");
-                if(absPath.startsWith(File.separator)){
+                if (absPath.startsWith(File.separator)) {
                     absPath = absPath.substring(1);
                 }
 
@@ -390,8 +390,6 @@ public class LazyJarIndexDB implements IndexDB {
                     String key_url = "file:kclstream:" + file.hashCode() + file.getAbsolutePath();
                     jarContentURL.put(absPath, new URL(key_url));
                 } else {
-
-
                     List<URL> rurl = detectedResourcesURL.get(absPath);
                     if (rurl == null) {
                         rurl = new ArrayList<URL>();
