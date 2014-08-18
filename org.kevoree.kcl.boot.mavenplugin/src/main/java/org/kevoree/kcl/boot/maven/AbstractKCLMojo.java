@@ -46,17 +46,21 @@ public abstract class AbstractKCLMojo extends org.apache.maven.plugin.AbstractMo
         graph.accept(new DependencyNodeVisitor() {
             @Override
             public boolean visit(DependencyNode dependencyNode) {
-                String key = buildKey(dependencyNode.getArtifact());
-                if (!alreadyProcess.containsKey(key)) {
-                    alreadyProcess.put(key, key);
-                    BootInfoLineImpl bootInfoLine = new BootInfoLineImpl();
-                    bootInfoLine.setUrl(key);
-                    for (DependencyNode child : dependencyNode.getChildren()) {
-                        bootInfoLine.getDependencies().add(buildKey(child.getArtifact()));
+                if (dependencyNode.getArtifact().getScope().equalsIgnoreCase("test")) {
+                    return false;
+                } else {
+                    String key = buildKey(dependencyNode.getArtifact());
+                    if (!alreadyProcess.containsKey(key)) {
+                        alreadyProcess.put(key, key);
+                        BootInfoLineImpl bootInfoLine = new BootInfoLineImpl();
+                        bootInfoLine.setUrl(key);
+                        for (DependencyNode child : dependencyNode.getChildren()) {
+                            bootInfoLine.getDependencies().add(buildKey(child.getArtifact()));
+                        }
+                        bootInfo.getLines().add(bootInfoLine);
                     }
-                    bootInfo.getLines().add(bootInfoLine);
+                    return true;
                 }
-                return true;
             }
 
             @Override
