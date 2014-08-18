@@ -163,7 +163,11 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
             //finally we lock everything to avoid to kill Kevoree from outside
             for (BootInfoLine line : bootInfo.getLines()) {
                 FlexyClassLoaderImpl kcl = (FlexyClassLoaderImpl) get(line.getURL());
-                kcl.lockLinks();
+                if (kcl == null) {
+                    Log.warn("Boot procedure is incomplete, the following dependency has not been installed : {}", line.getURL());
+                } else {
+                    kcl.lockLinks();
+                }
             }
             if (bootInfo.getMain() != null) {
                 final Boolean[] resl = new Boolean[1];
