@@ -42,4 +42,10 @@ public interface KevoreeKernel {
 
     public List<FlexyClassLoader> locate(String className);
 
+    public void stop();
+
+    public void reboot(BootInfo bootInfo);
+
+    public void reboot(InputStream is);
+
 }

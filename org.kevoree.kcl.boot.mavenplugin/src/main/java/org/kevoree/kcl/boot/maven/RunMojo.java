@@ -4,29 +4,23 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
-import org.kevoree.kcl.view.WebView;
 import org.kevoree.microkernel.BootInfo;
-
-import java.net.URI;
+import org.kevoree.microkernel.KevoreeKernel;
+import org.kevoree.microkernel.impl.KevoreeMicroKernelImpl;
 
 /**
  * Created by duke on 8/12/14.
  */
 
-@Mojo(name = "view", requiresDependencyResolution = ResolutionScope.COMPILE)
-public class ViewMojo extends AbstractKCLMojo {
+@Mojo(name = "run", requiresDependencyResolution = ResolutionScope.NONE)
+public class RunMojo extends AbstractKCLMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         try {
             BootInfo bootInfo = generate();
-            WebView view = new WebView();
-            view.display(bootInfo);
-            getLog().info("Browse to http://localhost:8080");
-            if (java.awt.Desktop.isDesktopSupported()) {
-                java.awt.Desktop.getDesktop().browse(new URI("http://localhost:8080"));
-            }
-            Thread.currentThread().join();
+            KevoreeKernel kernel = new KevoreeMicroKernelImpl();
+            kernel.boot(bootInfo);
         } catch (Exception e) {
             e.printStackTrace();
         }

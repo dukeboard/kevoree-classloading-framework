@@ -29,7 +29,10 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
     private static final String ossURL = "https://oss.sonatype.org/content/groups/public";
     private static final FlexyClassLoaderImpl system = new FlexyClassLoaderImpl();
 
+    private ThreadGroup threadGroup;
+
     public KevoreeMicroKernelImpl() {
+        threadGroup = new ThreadGroup("KevoreeKernel.TG");
         system.lockLinks();
         system.setKey("kcl://system");
     }
@@ -169,7 +172,7 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
                     if (!resl[0]) {
                         try {
                             final KevoreeKernel self = this;
-                            Thread t = new Thread() {
+                            Thread t = new Thread(threadGroup, threadGroup.getName() + ".boot") {
                                 @Override
                                 public void run() {
                                     Thread.currentThread().setContextClassLoader(loader);
@@ -220,6 +223,32 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
             }
         }
         return selected;
+    }
+
+    @Override
+    public void stop() {
+        Thread[] subThread = new Thread[Integer.MAX_VALUE];
+        threadGroup.enumerate(subThread, true);
+        for (Thread t : subThread) {
+            if (t != null) {
+                t.interrupt();
+                if (t.isAlive()) { //still alive, kill it
+                    t.stop();
+                }
+            }
+        }
+    }
+
+    @Override
+    public void reboot(BootInfo bootInfo) {
+        stop();
+        classloaders.clear();
+        boot(bootInfo);
+    }
+
+    @Override
+    public void reboot(InputStream is) {
+        reboot(BootInfoBuilder.read(is));
     }
 
 }
