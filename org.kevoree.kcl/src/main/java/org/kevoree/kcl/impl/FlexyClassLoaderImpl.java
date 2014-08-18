@@ -121,6 +121,15 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
     }
 
     @Override
+    public void load(File directory) throws IOException {
+        if (directory != null) {
+            classpathResources.loadJar(directory);
+        } else {
+            Log.error("Can't add null stream");
+        }
+    }
+
+    @Override
     public void attachChild(FlexyClassLoader child) {
         if (child != null) {
             if (!locked) {

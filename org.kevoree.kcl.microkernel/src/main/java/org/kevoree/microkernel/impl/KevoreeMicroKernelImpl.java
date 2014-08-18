@@ -12,6 +12,7 @@ import org.kevoree.resolver.MavenResolver;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -39,7 +40,7 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
 
     @Override
     public FlexyClassLoader get(String key) {
-        if (key.contains("org.kevoree.kcl") || key.contains("org.kevoree.maven.resolver")) {
+        if (key.contains(":org.kevoree.kcl:") || key.contains("org.kevoree.maven.resolver")) {
             return system;
         }
         return classloaders.get(key);
@@ -54,13 +55,22 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
         FlexyClassLoader newKCL = FlexyClassLoaderFactory.INSTANCE.create();
         newKCL.resolutionPriority = ResolutionPriority.CHILDS;
         newKCL.setKey(key);
-        try {
-            FileInputStream fop = new FileInputStream(in);
-            newKCL.load(fop);
-            fop.close();
-        } catch (Exception e) {
-            Log.error("Error while open param file in KevoreeMicroKernel", e);
-            return null;
+        if (in.isDirectory()) {
+            try {
+                newKCL.load(in);
+            } catch (IOException e) {
+                Log.error("Error while open param file in KevoreeMicroKernel", e);
+                return null;
+            }
+        } else {
+            try {
+                FileInputStream fop = new FileInputStream(in);
+                newKCL.load(fop);
+                fop.close();
+            } catch (Exception e) {
+                Log.error("Error while open param file in KevoreeMicroKernel", e);
+                return null;
+            }
         }
         classloaders.put(key, newKCL);
         return newKCL;
@@ -102,6 +112,16 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
             return cached;
         }
         File resolved;
+        //resolve file:
+        if (mavenURL.startsWith("file:")) {
+            resolved = new File(mavenURL.substring(5));
+            if (resolved.exists()) {
+                return put(key, resolved);
+            } else {
+                Log.error("Bad file descriptor {}", mavenURL.substring(5));
+            }
+        }
+        //resolve mvn:
         if (mavenURL.endsWith("SNAPSHOT")) {
             resolved = resolver.resolve(mavenURL, getSnapshotURLS());
         } else {

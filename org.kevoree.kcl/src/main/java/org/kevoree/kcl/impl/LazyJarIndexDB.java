@@ -310,6 +310,10 @@ public class LazyJarIndexDB implements IndexDB {
     public void loadJar(File jarFile) {
         FileInputStream fis = null;
         try {
+            if (jarFile.isDirectory()) {
+                addFiles(jarFile, jarFile.toURI().toURL(), jarFile.getAbsolutePath());
+                return;
+            }
             fis = new FileInputStream(jarFile);
             URL url = new URL("file:" + jarFile.getAbsolutePath());
             lastLoadedJars.add(url);
@@ -333,6 +337,76 @@ public class LazyJarIndexDB implements IndexDB {
 
     public void loadJar(String jarFile) {
         loadJar(new File(jarFile));
+    }
+
+
+    private void addFiles(File file, URL baseurl, String base) throws IOException {
+        boolean filtered = false;
+        if (parent != null) {
+            SpecialLoader extentionSelected = null;
+            for (SpecialLoader r : parent.getSpecialLoaders()) {
+                if (file.getName().endsWith(r.getExtension())) {
+                    extentionSelected = r;
+                    break;
+                }
+            }
+            if (extentionSelected != null) {
+                FileInputStream fis = new FileInputStream(file);
+                extentionSelected.doLoad(file.getAbsolutePath(), fis);
+                fis.close();
+                filtered = true;
+            }
+        }
+        if (!filtered && !file.isDirectory()) {
+            if (file.getName().endsWith(".jar")) {
+                if (baseurl != null) {
+                    lastLoadedJars.add(file.toURI().toURL());
+                }
+                Log.debug("KCL Found sub Jar => {}", file.getName());
+                loadJar(new FileInputStream(file));
+            } else {
+
+                String absPath = file.getAbsolutePath();
+                absPath = absPath.replace(base, "");
+                if(absPath.startsWith(File.separator)){
+                    absPath = absPath.substring(1);
+                }
+
+                if (file.getName().endsWith(".class")) {
+                    byte[] b = new byte[2048];
+                    FileInputStream fis = new FileInputStream(file);
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+                    int len = 0;
+                    while (len != -1) {
+                        len = fis.read(b);
+                        if (len > 0) {
+                            out.write(b, 0, len);
+                        }
+                    }
+                    out.flush();
+                    out.close();
+                    fis.close();
+                    jarEntryContents.put(absPath, out.toByteArray());
+                    String key_url = "file:kclstream:" + file.hashCode() + file.getAbsolutePath();
+                    jarContentURL.put(absPath, new URL(key_url));
+                } else {
+
+
+                    List<URL> rurl = detectedResourcesURL.get(absPath);
+                    if (rurl == null) {
+                        rurl = new ArrayList<URL>();
+                        detectedResourcesURL.put(absPath, rurl);
+                    }
+                    rurl.add(file.toURI().toURL());
+                }
+            }
+        }
+        File[] children = file.listFiles();
+        if (children != null) {
+            for (File child : children) {
+                addFiles(child, baseurl, base);
+            }
+        }
     }
 
 
