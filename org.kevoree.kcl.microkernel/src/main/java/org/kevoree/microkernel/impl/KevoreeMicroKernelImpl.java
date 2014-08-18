@@ -14,9 +14,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -207,6 +205,21 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public List<FlexyClassLoader> locate(String className) {
+        List<FlexyClassLoader> selected = new ArrayList<FlexyClassLoader>();
+        for (final FlexyClassLoader loader : getClassLoaders()) {
+            try {
+                Class cls = ((FlexyClassLoaderImpl) loader).loadLocalOnly(className);
+                if (cls != null) {
+                    selected.add(loader);
+                }
+            } catch (ClassNotFoundException ignore) {
+            }
+        }
+        return selected;
     }
 
 }

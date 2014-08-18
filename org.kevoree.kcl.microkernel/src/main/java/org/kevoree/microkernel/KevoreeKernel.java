@@ -5,6 +5,7 @@ import org.kevoree.resolver.MavenResolver;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -30,12 +31,15 @@ public interface KevoreeKernel {
     public void boot();
 
     public void boot(InputStream is);
-    
+
     public Set<String> getReleaseURLS();
 
     public Set<String> getSnapshotURLS();
 
     public static final ThreadLocal<KevoreeKernel> self = new ThreadLocal<KevoreeKernel>();
 
-    void boot(BootInfo bootInfo);
+    public void boot(BootInfo bootInfo);
+
+    public List<FlexyClassLoader> locate(String className);
+
 }
