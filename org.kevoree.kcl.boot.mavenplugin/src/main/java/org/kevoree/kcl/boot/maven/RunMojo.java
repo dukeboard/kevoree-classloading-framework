@@ -21,6 +21,7 @@ public class RunMojo extends AbstractKCLMojo {
             BootInfo bootInfo = generate();
             KevoreeKernel kernel = new KevoreeMicroKernelImpl();
             kernel.boot(bootInfo);
+            getLog().info("KevoreeKernel boot executed");
         } catch (Exception e) {
             e.printStackTrace();
         }

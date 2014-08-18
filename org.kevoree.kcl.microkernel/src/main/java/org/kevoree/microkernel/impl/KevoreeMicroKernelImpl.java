@@ -149,7 +149,11 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
             for (BootInfoLine line : bootInfo.getLines()) {
                 if (get(line.getURL()) == null) {
                     FlexyClassLoader fcl = install(line.getURL(), line.getURL());
-                    Log.trace("install {}, result={}", line.getURL(), fcl != null);
+                    if (fcl == null) {
+                        Log.error("Not resolved during boot sequence: {}", line.getURL());
+                    } else {
+                        Log.trace("install {}", line.getURL());
+                    }
                 }
             }
             //we link everything
@@ -207,6 +211,9 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
                             e.printStackTrace();
                         }
                     }
+                }
+                if (!resl[0]) {
+                    Log.error("Boot main not found {} in {} installed classloaders", bootInfo.getMain(), classloaders.size());
                 }
             }
         } catch (Exception e) {

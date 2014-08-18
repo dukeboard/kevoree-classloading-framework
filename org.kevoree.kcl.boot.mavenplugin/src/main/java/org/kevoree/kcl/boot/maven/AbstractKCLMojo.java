@@ -46,7 +46,7 @@ public abstract class AbstractKCLMojo extends org.apache.maven.plugin.AbstractMo
         graph.accept(new DependencyNodeVisitor() {
             @Override
             public boolean visit(DependencyNode dependencyNode) {
-                if (dependencyNode.getArtifact().getScope().equalsIgnoreCase("test")) {
+                if ("test".equalsIgnoreCase(dependencyNode.getArtifact().getScope())) {
                     return false;
                 } else {
                     String key = buildKey(dependencyNode.getArtifact());
