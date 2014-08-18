@@ -15,20 +15,38 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.kevoree.log</groupId>
-            <artifactId>org.kevoree.log</artifactId>
-            <version>${kevoree.log.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.kevoree.kcl</groupId>
-            <artifactId>org.kevoree.kcl</artifactId>
+            <artifactId>org.kevoree.kcl.microkernel</artifactId>
             <version>${parent.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.kevoree</groupId>
-            <artifactId>org.kevoree.maven.resolver</artifactId>
-            <version>${basic.resolver.version}</version>
-        </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>org.kevoree.kcl.boot.App</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <appendAssemblyId>false</appendAssemblyId>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

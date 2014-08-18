@@ -15,17 +15,80 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class FlexyClassLoaderImpl extends FlexyClassLoader {
 
-    /* ClassLoader overridden methods */
     @Override
     public Class loadClass(String className) throws ClassNotFoundException {
         return loadClass(className, true);
     }
 
+    public Class loadLocalOnly(String className) throws ClassNotFoundException {
+        Class result = getLoadedClass(className);
+        if (result == null) {
+            byte[] bytes = loadClassBytes(className);
+            if (bytes != null) {
+                synchronized (lock) {
+                    result = getLoadedClass(className);
+                    if (result == null) {
+                        result = internal_defineClass(className, bytes);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
     @Override
     public Class loadClass(String className, boolean resolveIt) throws ClassNotFoundException {
+
         KlassLoadRequest request = new KlassLoadRequest();
         request.className = className;
         Class result = internal_loadClass(request);
+        //Still not found, if thread current thread is a FlexyClassLoader try also
+        if (result == null) {
+            ClassLoader threadContextCL = Thread.currentThread().getContextClassLoader();
+            if (threadContextCL instanceof FlexyClassLoaderImpl) {
+                FlexyClassLoaderImpl castedCL = (FlexyClassLoaderImpl) threadContextCL;
+                if (!request.passedKlassLoader.contains((castedCL).getKey())) {
+                    result = (castedCL).internal_loadClass(request);
+                }
+            }
+        }
+        if (result == null && resolutionPriority.equals(ResolutionPriority.CHILDS)) {
+            ClassLoader parentCL = getParent();
+            if (parentCL != null && parentCL != ClassLoader.getSystemClassLoader()) {
+                if (parentCL instanceof FlexyClassLoaderImpl) {
+                    FlexyClassLoaderImpl parentCastedCL = (FlexyClassLoaderImpl) parentCL;
+                    result = parentCastedCL.internal_loadClass(request);
+                } else {
+                    try {
+                        result = parentCL.loadClass(request.className);
+                    } catch (ClassNotFoundException e) {
+                    }
+                }
+            }
+            if (result == null) {
+                ClassLoader current = this.getClass().getClassLoader();
+                if (current != parentCL) {
+                    if (current instanceof FlexyClassLoaderImpl) {
+                        FlexyClassLoaderImpl currentCasted = (FlexyClassLoaderImpl) current;
+                        result = currentCasted.internal_loadClass(request);
+                    } else {
+                        try {
+                            result = current.loadClass(request.className);
+                        } catch (ClassNotFoundException e) {
+                        }
+                    }
+                }
+            }
+        }
+
+
+        //If still not found and not system basic class, lets try again
+        if (result == null && !request.className.startsWith("java") && !request.className.startsWith("javax")/*dangerous optimization*/) {
+            try {
+                result = findSystemClass(request.className);
+            } catch (ClassNotFoundException e) {
+            }
+        }
         if (result == null) {
             if (Log.TRACE) {
                 Log.trace("KCL Class not resolved " + className + " from " + this.key);
@@ -36,7 +99,7 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
                 if (Thread.currentThread().getContextClassLoader() instanceof FlexyClassLoader) {
                     Log.trace("Thread current KCL: {}", ((FlexyClassLoader) Thread.currentThread().getContextClassLoader()).getKey());
                 } else {
-                    if(Thread.currentThread().getContextClassLoader() != null){
+                    if (Thread.currentThread().getContextClassLoader() != null) {
                         Log.trace("Thread current : {}", Thread.currentThread().getContextClassLoader().toString());
                     } else {
                         Log.trace("Thread current CL is null !");
@@ -44,30 +107,9 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
                 }
             }
             throw new ClassNotFoundException(className);
-        } else {
-            /*
-            if (Log.TRACE) {
-                Log.trace("KCL Class resolved " + className + " from " + this.key);
-                Log.trace("Passed FlexClassLoader, childs : " + getSubClassLoaders().size());
-                for (String klassLoader : request.passedKlassLoader) {
-                    Log.trace("-->" + klassLoader);
-                }
-                if (Thread.currentThread().getContextClassLoader() instanceof FlexyClassLoader) {
-                    Log.trace("Thread current KCL: {}", ((FlexyClassLoader) Thread.currentThread().getContextClassLoader()).getKey());
-                } else {
-                    if(Thread.currentThread().getContextClassLoader() != null){
-                        Log.trace("Thread current : {}", Thread.currentThread().getContextClassLoader().toString());
-                    } else {
-                        Log.trace("Thread current CL is null !");
-                    }
-                }
-            }
-            */
         }
         return result;
     }
-    /* End of Class Load specific engine */
-
 
     @Override
     public void load(InputStream child) throws IOException {
@@ -255,7 +297,7 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
     public Class internal_loadClass(KlassLoadRequest request) {
         Class result = null;
         //if system class try directly
-        if (request.className.startsWith("java")) {
+        if (request.className.startsWith("java") || request.className.startsWith("javax")) {
             try {
                 result = findSystemClass(request.className);
             } catch (ClassNotFoundException e) {
@@ -277,6 +319,7 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
             }
         }
         request.passedKlassLoader.add(getKey());
+
         //TODO check if there no risk of cycle
         if (result == null && resolutionPriority.equals(ResolutionPriority.PARENT)) {
             ClassLoader parentCL = getParent();
@@ -294,13 +337,15 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
             }
             if (result == null) {
                 ClassLoader current = this.getClass().getClassLoader();
-                if (current instanceof FlexyClassLoaderImpl) {
-                    FlexyClassLoaderImpl currentCasted = (FlexyClassLoaderImpl) current;
-                    result = currentCasted.internal_loadClass(request);
-                } else {
-                    try {
-                        result = current.loadClass(request.className);
-                    } catch (ClassNotFoundException e) {
+                if (current != parentCL) {
+                    if (current instanceof FlexyClassLoaderImpl) {
+                        FlexyClassLoaderImpl currentCasted = (FlexyClassLoaderImpl) current;
+                        result = currentCasted.internal_loadClass(request);
+                    } else {
+                        try {
+                            result = current.loadClass(request.className);
+                        } catch (ClassNotFoundException e) {
+                        }
                     }
                 }
             }
@@ -308,50 +353,6 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         //if still not found try to call to entire graph
         if (result == null) {
             result = graphLoadClass(request);
-        }
-        //if priority to CHILDS nets now try parent CL
-        if (result == null && resolutionPriority.equals(ResolutionPriority.CHILDS)) {
-            ClassLoader parentCL = getParent();
-            if (parentCL != null) {
-                if (parentCL instanceof FlexyClassLoaderImpl) {
-                    FlexyClassLoaderImpl parentCastedCL = (FlexyClassLoaderImpl) parentCL;
-                    result = parentCastedCL.internal_loadClass(request);
-                } else {
-                    try {
-                        result = parentCL.loadClass(request.className);
-                    } catch (ClassNotFoundException e) {
-                    }
-                }
-            }
-            if (result == null) {
-                ClassLoader current = this.getClass().getClassLoader();
-                if (current instanceof FlexyClassLoaderImpl) {
-                    FlexyClassLoaderImpl currentCasted = (FlexyClassLoaderImpl) current;
-                    result = currentCasted.internal_loadClass(request);
-                } else {
-                    try {
-                        result = current.loadClass(request.className);
-                    } catch (ClassNotFoundException e) {
-                    }
-                }
-            }
-        }
-        //If still not found and not system basic class, lets try again
-        if (result == null && !request.className.startsWith("java")/*dangerous optimization*/) {
-            try {
-                result = findSystemClass(request.className);
-            } catch (ClassNotFoundException e) {
-            }
-        }
-        //Still not found, if thread current thread is a FlexyClassLoader try also
-        if (result == null) {
-            ClassLoader threadContextCL = Thread.currentThread().getContextClassLoader();
-            if (threadContextCL instanceof FlexyClassLoaderImpl) {
-                FlexyClassLoaderImpl castedCL = (FlexyClassLoaderImpl) threadContextCL;
-                if (!request.passedKlassLoader.contains((castedCL).getKey())) {
-                    result = (castedCL).internal_loadClass(request);
-                }
-            }
         }
         return result;
     }
@@ -472,7 +473,6 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
             return new ArrayList<URL>();
         }
     }
-
 
     @Override
     public java.util.Enumeration<URL> findResources(String p1) throws IOException {

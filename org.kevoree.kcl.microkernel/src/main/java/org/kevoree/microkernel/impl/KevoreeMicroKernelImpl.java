@@ -147,13 +147,15 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
             //we install deploy units
             for (BootInfoLine line : bootInfo.getLines()) {
                 if (get(line.getURL()) == null) {
-                    install(line.getURL(), line.getURL());
+                    FlexyClassLoader fcl = install(line.getURL(), line.getURL());
+                    Log.trace("install {}, result={}", line.getURL(), fcl != null);
                 }
             }
             //we link everything
             for (BootInfoLine line : bootInfo.getLines()) {
                 FlexyClassLoader kcl = get(line.getURL());
                 for (String dep : line.getDependencies()) {
+                    Log.trace("Link {} -> {}", kcl.getKey(), dep);
                     kcl.attachChild(get(dep));
                 }
             }
@@ -175,11 +177,16 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
                                     Thread.currentThread().setContextClassLoader(loader);
                                     KevoreeKernel.self.set(self);
                                     try {
-                                        Class cls = loader.loadClass(bootInfo.getMain());
-                                        Method meth = cls.getMethod("main", String[].class);
-                                        String[] params = new String[0];
-                                        meth.invoke(null, (Object) params);
-                                        resl[0] = true;
+                                        Class cls = ((FlexyClassLoaderImpl) loader).loadLocalOnly(bootInfo.getMain());
+                                        if (cls != null) {
+                                            if (classloaders.values().contains(cls.getClassLoader())) {
+                                                Method meth = cls.getMethod("main", String[].class);
+                                                String[] params = new String[0];
+                                                Log.trace("KevoreeKernel will execute main method on {} from {}", cls.getName(), loader.getKey());
+                                                meth.invoke(null, (Object) params);
+                                                resl[0] = true;
+                                            }
+                                        }
                                     } catch (java.lang.ClassNotFoundException e) {
                                         resl[0] = false;
                                         //NOP, we are looking for all

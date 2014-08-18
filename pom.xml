@@ -61,7 +61,9 @@
     <modules>
         <module>org.kevoree.kcl</module>
         <module>org.kevoree.kcl.microkernel</module>
+        <module>org.kevoree.kcl.view</module>
         <module>org.kevoree.kcl.boot.mavenplugin</module>
+        <module>org.kevoree.kcl.boot</module>
         <!--  <module>org.kevoree.kcl.leveldb</module> -->
     </modules>
 

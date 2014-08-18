@@ -21,6 +21,11 @@
             <version>${parent.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.kevoree.kcl</groupId>
+            <artifactId>org.kevoree.kcl.view</artifactId>
+            <version>${parent.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-core</artifactId>
             <version>3.0.4</version>

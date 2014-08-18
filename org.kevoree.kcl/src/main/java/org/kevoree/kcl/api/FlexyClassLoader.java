@@ -24,4 +24,6 @@ public abstract class FlexyClassLoader extends ClassLoader {
 
     public abstract void setKey(String s);
 
+    //public abstract void printDeps();
+
 }
