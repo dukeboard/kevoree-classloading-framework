@@ -28,11 +28,12 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
 
     private static final String centralURL = "http://repo1.maven.org/maven2";
     private static final String ossURL = "https://oss.sonatype.org/content/groups/public";
-    private static final FlexyClassLoaderImpl system = new FlexyClassLoaderImpl();
+    private FlexyClassLoaderImpl system;
 
     private ThreadGroup threadGroup;
 
     public KevoreeMicroKernelImpl() {
+        system = new FlexyClassLoaderImpl();
         threadGroup = new ThreadGroup("KevoreeKernel.TG");
         system.lockLinks();
         system.setKey("kcl://system");
@@ -40,11 +41,10 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
 
     @Override
     public FlexyClassLoader get(String key) {
-        if (
+        if (key.contains("org.kevoree.log:org.kevoree.log") ||
                 key.contains("org.kevoree.kcl:org.kevoree.kcl") ||
-                        key.contains("org.kevoree.kcl:org.kevoree.kcl.microkernel") ||
-                        key.contains("org.kevoree:org.kevoree.maven.resolver")
-                ) {
+                key.contains("org.kevoree.kcl:org.kevoree.kcl.microkernel") ||
+                key.contains("org.kevoree:org.kevoree.maven.resolver")) {
             return system;
         }
         return classloaders.get(key);
@@ -83,7 +83,7 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
     @Override
     public void drop(String key) {
         FlexyClassLoaderImpl kcl = (FlexyClassLoaderImpl) classloaders.get(key);
-        if(kcl != null){
+        if (kcl != null) {
             if (kcl.isLocked()) {
                 return;
             } else {
