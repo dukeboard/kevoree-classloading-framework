@@ -40,7 +40,11 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
 
     @Override
     public FlexyClassLoader get(String key) {
-        if (key.contains(":org.kevoree.kcl:") || key.contains("org.kevoree.maven.resolver")) {
+        if (
+                key.contains("org.kevoree.kcl:org.kevoree.kcl") ||
+                        key.contains("org.kevoree.kcl:org.kevoree.kcl.microkernel") ||
+                        key.contains("org.kevoree:org.kevoree.maven.resolver")
+                ) {
             return system;
         }
         return classloaders.get(key);
@@ -182,8 +186,8 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
                 for (String dep : line.getDependencies()) {
                     Log.trace("Link {} -> {}", kcl.getKey(), dep);
                     FlexyClassLoader resolvedDep = get(dep);
-                    if(resolvedDep == null){
-                        Log.warn("Error during boot sequence dependency {} cannot be linked to {}",dep,kcl.getKey());
+                    if (resolvedDep == null) {
+                        Log.warn("Error during boot sequence dependency {} cannot be linked to {}", dep, kcl.getKey());
                     } else {
                         kcl.attachChild(resolvedDep);
                     }
