@@ -83,12 +83,14 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
     @Override
     public void drop(String key) {
         FlexyClassLoaderImpl kcl = (FlexyClassLoaderImpl) classloaders.get(key);
-        if (kcl.isLocked()) {
-            return;
-        } else {
-            classloaders.remove(key);
-            for (FlexyClassLoader subs : getClassLoaders()) {
-                subs.detachChild(kcl);
+        if(kcl != null){
+            if (kcl.isLocked()) {
+                return;
+            } else {
+                classloaders.remove(key);
+                for (FlexyClassLoader subs : getClassLoaders()) {
+                    subs.detachChild(kcl);
+                }
             }
         }
     }
