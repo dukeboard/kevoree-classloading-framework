@@ -22,7 +22,7 @@
         <dependency>
             <groupId>org.kevoree.kcl</groupId>
             <artifactId>org.kevoree.kcl</artifactId>
-            <version>${parent.version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.kevoree</groupId>

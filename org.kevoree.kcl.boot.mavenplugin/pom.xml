@@ -18,12 +18,12 @@
         <dependency>
             <groupId>org.kevoree.kcl</groupId>
             <artifactId>org.kevoree.kcl.microkernel</artifactId>
-            <version>${parent.version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.kevoree.kcl</groupId>
             <artifactId>org.kevoree.kcl.view</artifactId>
-            <version>${parent.version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.maven</groupId>

@@ -22,6 +22,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kevoree.log.version>1</kevoree.log.version>
         <basic.resolver.version>20</basic.resolver.version>
+        <undertow.version>1.0.15.Final</undertow.version>
     </properties>
 
     <licenses>
