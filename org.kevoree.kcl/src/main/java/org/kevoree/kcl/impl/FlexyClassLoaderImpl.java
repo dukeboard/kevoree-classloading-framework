@@ -135,6 +135,7 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
             if (!locked) {
                 if (!subClassLoaders.contains(child)) {
                     subClassLoaders.add(child);
+                    subClassLoaderModified = true;
                 }
             }
         } else {
@@ -192,10 +193,12 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
     /* End Special Loader management */
 
     protected ArrayList<FlexyClassLoader> subClassLoaders = new ArrayList<FlexyClassLoader>();
+    protected boolean subClassLoaderModified = false;
 
     public void cleanupLinks(ClassLoader c) {
         //TODO CHECK USED
         subClassLoaders.remove(c);
+        subClassLoaderModified = true;
     }
 
 
@@ -274,10 +277,17 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         }
     };
 
+    private void checkSubClassloadersSorted() {
+        if(subClassLoaderModified) {
+            Collections.sort(subClassLoaders, scoreSorter);
+            subClassLoaderModified = false;
+        }
+    }
+
     public Class graphLoadClass(KlassLoadRequest request) {
         //cut graph cyclic search
         Class result = null;
-        Collections.sort(subClassLoaders, scoreSorter);
+        checkSubClassloadersSorted();
         ArrayList<FlexyClassLoader> tempSubs = new ArrayList(subClassLoaders);
         for (ClassLoader subCL : tempSubs) {
             if (subCL instanceof FlexyClassLoader) {
@@ -528,7 +538,7 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         if ((classpathResources).contains(request.className)) {
             return this;
         }
-        Collections.sort(subClassLoaders, scoreSorter);
+        checkSubClassloadersSorted();
         FlexyClassLoaderImpl result = null;
         for (FlexyClassLoader subCL : subClassLoaders) {
             if (!request.passedKlassLoader.contains((subCL).getKey())) {
