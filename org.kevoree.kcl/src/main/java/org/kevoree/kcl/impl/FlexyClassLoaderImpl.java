@@ -278,7 +278,8 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         //cut graph cyclic search
         Class result = null;
         Collections.sort(subClassLoaders, scoreSorter);
-        for (ClassLoader subCL : subClassLoaders) {
+        ArrayList<FlexyClassLoader> tempSubs = new ArrayList(subClassLoaders);
+        for (ClassLoader subCL : tempSubs) {
             if (subCL instanceof FlexyClassLoader) {
                 if (!request.passedKlassLoader.contains(((FlexyClassLoader) subCL).getKey())) {
                     FlexyClassLoaderImpl subKCL = (FlexyClassLoaderImpl) subCL;
