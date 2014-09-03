@@ -3,13 +3,13 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>org.kevoree.kcl.boot.mavenplugin</artifactId>
     <name>Kevoree :: KCL :: Boot :: MavenPlugin</name>
-    <version>15-SNAPSHOT</version>
+    <version>15</version>
     <packaging>maven-plugin</packaging>
 
     <parent>
         <artifactId>org.kevoree.kcl.root</artifactId>
         <groupId>org.kevoree.kcl</groupId>
-        <version>15-SNAPSHOT</version>
+        <version>15</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
