@@ -135,7 +135,6 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
             if (!locked) {
                 if (!subClassLoaders.contains(child)) {
                     subClassLoaders.add(child);
-                    subClassLoaderModified = true;
                 }
             }
         } else {
@@ -193,12 +192,10 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
     /* End Special Loader management */
 
     protected ArrayList<FlexyClassLoader> subClassLoaders = new ArrayList<FlexyClassLoader>();
-    protected boolean subClassLoaderModified = false;
 
     public void cleanupLinks(ClassLoader c) {
         //TODO CHECK USED
         subClassLoaders.remove(c);
-        subClassLoaderModified = true;
     }
 
 
@@ -276,19 +273,19 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
             return -1;
         }
     };
-
+/*
     private void checkSubClassloadersSorted() {
         if(subClassLoaderModified) {
             Collections.sort(subClassLoaders, scoreSorter);
             subClassLoaderModified = false;
         }
-    }
+    }*/
 
     public Class graphLoadClass(KlassLoadRequest request) {
         //cut graph cyclic search
         Class result = null;
-        checkSubClassloadersSorted();
         ArrayList<FlexyClassLoader> tempSubs = new ArrayList(subClassLoaders);
+        Collections.sort(tempSubs, scoreSorter);
         for (ClassLoader subCL : tempSubs) {
             if (subCL instanceof FlexyClassLoader) {
                 if (!request.passedKlassLoader.contains(((FlexyClassLoader) subCL).getKey())) {
@@ -538,9 +535,10 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         if ((classpathResources).contains(request.className)) {
             return this;
         }
-        checkSubClassloadersSorted();
         FlexyClassLoaderImpl result = null;
-        for (FlexyClassLoader subCL : subClassLoaders) {
+        ArrayList<FlexyClassLoader> tempSubs = new ArrayList(subClassLoaders);
+        Collections.sort(tempSubs, scoreSorter);
+        for (FlexyClassLoader subCL : tempSubs) {
             if (!request.passedKlassLoader.contains((subCL).getKey())) {
                 FlexyClassLoaderImpl subKCL = (FlexyClassLoaderImpl) subCL;
                 result = subKCL.graphResourceOwnerResolution(request);
