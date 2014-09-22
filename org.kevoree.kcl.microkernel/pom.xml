@@ -3,12 +3,12 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>org.kevoree.kcl.microkernel</artifactId>
     <name>Kevoree :: KCL :: MicroKernel</name>
-    <version>16-SNAPSHOT</version>
+    <version>16</version>
 
     <parent>
         <artifactId>org.kevoree.kcl.root</artifactId>
         <groupId>org.kevoree.kcl</groupId>
-        <version>16-SNAPSHOT</version>
+        <version>16</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
