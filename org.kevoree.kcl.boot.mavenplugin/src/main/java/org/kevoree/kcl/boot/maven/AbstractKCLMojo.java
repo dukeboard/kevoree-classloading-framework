@@ -11,6 +11,7 @@ import org.apache.maven.shared.dependency.tree.DependencyTreeBuilder;
 import org.apache.maven.shared.dependency.tree.DependencyTreeBuilderException;
 import org.apache.maven.shared.dependency.tree.traversal.DependencyNodeVisitor;
 import org.kevoree.microkernel.BootInfo;
+import org.kevoree.microkernel.BootInfoLine;
 import org.kevoree.microkernel.impl.BootInfoImpl;
 import org.kevoree.microkernel.impl.BootInfoLineImpl;
 
@@ -40,7 +41,7 @@ public abstract class AbstractKCLMojo extends org.apache.maven.plugin.AbstractMo
 
     public BootInfo generate() throws DependencyTreeBuilderException {
         final BootInfoImpl bootInfo = new BootInfoImpl();
-        ArtifactFilter artifactFilter = new ScopeArtifactFilter(Artifact.SCOPE_COMPILE);
+        ArtifactFilter artifactFilter = new ScopeArtifactFilter(Artifact.SCOPE_COMPILE_PLUS_RUNTIME);
         DependencyNode graph = dependencyTreeBuilder.buildDependencyTree(project, localRepository, artifactFilter);
         final Map<String, String> alreadyProcess = new HashMap<String, String>();
         graph.accept(new DependencyNodeVisitor() {
@@ -49,17 +50,22 @@ public abstract class AbstractKCLMojo extends org.apache.maven.plugin.AbstractMo
                 if ("test".equalsIgnoreCase(dependencyNode.getArtifact().getScope())) {
                     return false;
                 } else {
-                    String key = buildKey(dependencyNode.getArtifact());
-                    if (!alreadyProcess.containsKey(key)) {
-                        alreadyProcess.put(key, key);
-                        BootInfoLineImpl bootInfoLine = new BootInfoLineImpl();
-                        bootInfoLine.setUrl(key);
-                        for (DependencyNode child : dependencyNode.getChildren()) {
-                            if (!"test".equalsIgnoreCase(child.getArtifact().getScope())) {
-                                bootInfoLine.getDependencies().add(buildKey(child.getArtifact()));
-                            }
+                    final String key = buildKey(dependencyNode.getArtifact());
+                    BootInfoLine bootInfoLine = null;
+                    for (BootInfoLine line : bootInfo.getLines()) {
+                        if (line.getURL().equals(key)) {
+                            bootInfoLine = line;
                         }
+                    }
+                    if (bootInfoLine == null) {
+                        bootInfoLine = new BootInfoLineImpl();
+                        ((BootInfoLineImpl) bootInfoLine).setUrl(key);
                         bootInfo.getLines().add(bootInfoLine);
+                    }
+                    for (DependencyNode child : dependencyNode.getChildren()) {
+                        if (!"test".equalsIgnoreCase(child.getArtifact().getScope())) {
+                            bootInfoLine.getDependencies().add(buildKey(child.getArtifact()));
+                        }
                     }
                     return true;
                 }
