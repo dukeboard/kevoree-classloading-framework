@@ -5,7 +5,9 @@ import org.kevoree.kcl.api.IndexDB;
 import org.kevoree.kcl.api.ResolutionPriority;
 import org.kevoree.log.Log;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -112,15 +114,6 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
     }
 
     @Override
-    public void load(InputStream child) throws IOException {
-        if (child != null) {
-            classpathResources.loadJar(child);
-        } else {
-            Log.error("Can't add null stream");
-        }
-    }
-
-    @Override
     public void load(File directory) throws IOException {
         if (directory != null) {
             classpathResources.loadJar(directory);
@@ -152,7 +145,7 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
     protected IndexDB classpathResources = null;
 
     public FlexyClassLoaderImpl() {
-        classpathResources = new LazyJarIndexDB(this);
+        classpathResources = new JarIndexDB(this);
     }
 
     public FlexyClassLoaderImpl(IndexDB db) {
@@ -198,10 +191,9 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         subClassLoaders.remove(c);
     }
 
-
     public byte[] loadClassBytes(String className) {
         String className2 = formatClassName(className);
-        return classpathResources.get(className2);
+        return classpathResources.getClassBytes(className2);
     }
 
     private String formatClassName(String className) {
@@ -400,114 +392,43 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
     }
 
     protected InputStream internal_getResourceAsStream(String name) {
-        if (name.endsWith(".class")) {
-            byte[] res = null;
-            if (name != null) {
-                res = this.classpathResources.get(name);
-            }
-            if (res != null) {
-                return new ByteArrayInputStream(res);
-            }
-        }
-        URL url = this.classpathResources.getURL(name);
-        if (url != null) {
-            if (url.toString().startsWith("file:kclstream:")) {
-                return new ByteArrayInputStream(this.classpathResources.get(url));
-            } else {
-                try {
-                    return url.openStream();
-                } catch (IOException e) {
-                    return null;
-                }
-            }
-        } else {
-            byte[] res = this.classpathResources.get(name);
-            if (res != null) {
-                return new ByteArrayInputStream(res);
-            }
-            //STRANGE ERROR
-            return null;
-        }
-    }
-
-    protected URL internal_getResource(String s) {
-        if ((classpathResources).contains(s)) {
-            if ((classpathResources).getURL(s).toString().startsWith("file:kclstream:")) {
-                String cleanName;
-                if (s.contains("/")) {
-                    cleanName = s.substring(s.lastIndexOf("/") + 1);
-                } else {
-                    cleanName = s;
-                }
-                try {
-                    File tFile = File.createTempFile("dummy_kcl_temp", cleanName);
-                    tFile.deleteOnExit();
-                    FileOutputStream tWriter = new FileOutputStream(tFile);
-                    tWriter.write((classpathResources).get((classpathResources).getURL(s)));
-                    tWriter.close();
-                    return new URL("file:///" + tFile.getAbsolutePath());
-                } catch (Exception e) {
-                    return null;
-                }
-            } else {
-                //SIMPLY RETURN URL
-                return (classpathResources).getURL(s);
+        List<URL> urls = this.classpathResources.get(name);
+        if (urls != null) {
+            try {
+                return urls.get(0).openStream();
+            } catch (IOException e) {
+                Log.error("Error in KCL while opening URL ", e);
+                return null;
             }
         } else {
             return null;
         }
     }
 
-
-    private List<URL> internal_findResources(String p1) {
-        if (classpathResources.contains(p1)) {
-            List<URL> urls = (classpathResources).getURLS(p1);
-            List<URL> resolvedUrl = new ArrayList<URL>();
-            for (URL u : urls) {
-                if (u.toString().startsWith("file:kclstream:")) {
-                    String cleanName;
-                    if (p1.contains("/")) {
-                        cleanName = p1.substring(p1.lastIndexOf("/") + 1);
-                    } else {
-                        cleanName = p1;
-                    }
-                    try {
-                        File tFile = File.createTempFile("dummy_kcl_temp", cleanName);
-                        tFile.deleteOnExit();
-                        FileOutputStream tWriter = new FileOutputStream(tFile);
-                        tWriter.write(classpathResources.get(u));
-                        tWriter.close();
-                        resolvedUrl.add(new URL("file:///" + tFile.getAbsolutePath()));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                } else {
-                    resolvedUrl.add(u);
-                }
-            }
-            return resolvedUrl;
+    protected URL internal_getResource(String name) {
+        List<URL> urls = this.classpathResources.get(name);
+        if (urls != null) {
+            return urls.get(0);
         } else {
-            return new ArrayList<URL>();
+            return null;
         }
+    }
+
+
+    private List<URL> internal_getResources(String name) {
+        List<URL> urls = this.classpathResources.get(name);
+        if (urls == null) {
+            urls = new ArrayList<URL>();
+        }
+        return urls;
     }
 
     @Override
-    public java.util.Enumeration<URL> findResources(String p1) throws IOException {
-        List<URL> selfRes = internal_findResources(p1);
-        //Then call on all
-        for (ClassLoader sub : subClassLoaders) {
-            java.util.Enumeration<URL> subEnum;
-            if (sub instanceof FlexyClassLoaderImpl) {
-                subEnum = Collections.enumeration(((FlexyClassLoaderImpl) sub).internal_findResources(p1));
-            } else {
-                subEnum = sub.getResources(p1);
-            }
-            while (subEnum.hasMoreElements()) {
-                URL subElem = subEnum.nextElement();
-                if (!selfRes.contains(subElem)) {
-                    selfRes.add(subElem);
-                }
-            }
+    public java.util.Enumeration<URL> findResources(String name) throws IOException {
+        List<URL> selfRes = new ArrayList<URL>();
+        List<FlexyClassLoaderImpl> potentials = resourcesOwnerResolution(name);
+        for (FlexyClassLoaderImpl sub : potentials) {
+            selfRes.addAll(sub.internal_getResources(name));
         }
         return Collections.enumeration(selfRes);
     }
@@ -522,7 +443,6 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
     public String getKey() {
         return key;
     }
-
 
     private FlexyClassLoaderImpl resourceOwnerResolution(String name) {
         KlassLoadRequest request = new KlassLoadRequest();
@@ -549,6 +469,29 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
             }
         }
         return null;
+    }
+
+    private List<FlexyClassLoaderImpl> resourcesOwnerResolution(String name) {
+        KlassLoadRequest request = new KlassLoadRequest();
+        request.className = name;
+        return graphResourcesOwnerResolution(request);
+    }
+
+    public List<FlexyClassLoaderImpl> graphResourcesOwnerResolution(KlassLoadRequest request) {
+        List<FlexyClassLoaderImpl> result = new ArrayList<FlexyClassLoaderImpl>();
+        request.passedKlassLoader.add(this.getKey());
+        if ((classpathResources).contains(request.className)) {
+            result.add(this);
+        }
+        ArrayList<FlexyClassLoader> tempSubs = new ArrayList(subClassLoaders);
+        Collections.sort(tempSubs, scoreSorter);
+        for (FlexyClassLoader subCL : tempSubs) {
+            if (!request.passedKlassLoader.contains((subCL).getKey())) {
+                FlexyClassLoaderImpl subKCL = (FlexyClassLoaderImpl) subCL;
+                result.addAll(subKCL.graphResourcesOwnerResolution(request));
+            }
+        }
+        return result;
     }
 
 }

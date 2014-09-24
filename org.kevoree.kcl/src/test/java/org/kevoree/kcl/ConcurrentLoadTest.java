@@ -2,6 +2,7 @@ package org.kevoree.kcl;
 
 import org.junit.Test;
 import org.kevoree.kcl.api.FlexyClassLoader;
+import org.kevoree.kcl.api.Helper;
 import org.kevoree.kcl.impl.FlexyClassLoaderImpl;
 import org.kevoree.log.Log;
 
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class ConcurrentLoadTest implements Runnable {
 
+
     @Test
     public void testConcurrentLoad() throws InterruptedException {
         ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 4);
@@ -29,13 +31,14 @@ public class ConcurrentLoadTest implements Runnable {
     @Override
     public void run() {
 
+
         try {
             System.out.println("Perform simple KCL Test");
             FlexyClassLoader jar = new FlexyClassLoaderImpl();
-            jar.load(this.getClass().getClassLoader().getResourceAsStream("org.kevoree.kcl.jar"));
+            jar.load(Helper.stream2File(this.getClass().getClassLoader().getResourceAsStream("org.kevoree.kcl.jar"),"org.kevoree.kcl.jar"));
 
             FlexyClassLoader jarLog = new FlexyClassLoaderImpl();
-            jarLog.load(this.getClass().getClassLoader().getResourceAsStream("org.kevoree.log.jar"));
+            jarLog.load(Helper.stream2File(this.getClass().getClassLoader().getResourceAsStream("org.kevoree.log.jar"),"org.kevoree.log.jar"));
 
             jar.attachChild(jarLog);
 

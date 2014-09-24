@@ -11,7 +11,6 @@ import org.kevoree.microkernel.KevoreeKernel;
 import org.kevoree.resolver.MavenResolver;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
@@ -68,9 +67,7 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
             }
         } else {
             try {
-                FileInputStream fop = new FileInputStream(in);
-                newKCL.load(fop);
-                fop.close();
+                newKCL.load(in);
             } catch (Exception e) {
                 Log.error("Error while open param file in KevoreeMicroKernel", e);
                 return null;

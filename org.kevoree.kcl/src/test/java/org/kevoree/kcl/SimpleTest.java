@@ -3,6 +3,7 @@ package org.kevoree.kcl;
 import org.junit.Test;
 import org.kevoree.kcl.api.FlexyClassLoader;
 import org.kevoree.kcl.api.FlexyClassLoaderFactory;
+import org.kevoree.kcl.api.Helper;
 import org.kevoree.kcl.impl.FlexyClassLoaderImpl;
 import org.kevoree.log.Log;
 
@@ -17,11 +18,12 @@ import java.io.InputStream;
  */
 public class SimpleTest {
 
+
     @Test
     public void simpleTest() throws IOException, ClassNotFoundException {
         System.out.println("Perform simple KCL Test");
         FlexyClassLoader jar = FlexyClassLoaderFactory.INSTANCE.create();
-        jar.load(this.getClass().getClassLoader().getResourceAsStream("org.kevoree.kcl.jar"));
+        jar.load(Helper.stream2File(this.getClass().getClassLoader().getResourceAsStream("org.kevoree.kcl.jar"),"org.kevoree.kcl.jar"));
         Class resolvedClass = jar.loadClass("org.kevoree.kcl.impl.FlexyClassLoaderImpl");
 
         System.out.println(resolvedClass.getClassLoader());
@@ -40,11 +42,11 @@ public class SimpleTest {
         System.out.println("Perform simple KCL Test");
         FlexyClassLoader jar = new FlexyClassLoaderImpl();
         //jar.isolateFromSystem();
-        jar.load(this.getClass().getClassLoader().getResourceAsStream("org.kevoree.kcl.jar"));
+        jar.load(Helper.stream2File(this.getClass().getClassLoader().getResourceAsStream("org.kevoree.kcl.jar"),"org.kevoree.kcl.jar"));
         systemEnabledKCL.attachChild(jar);
 
         FlexyClassLoaderImpl jarLog = new FlexyClassLoaderImpl();
-        jarLog.load(this.getClass().getClassLoader().getResourceAsStream("org.kevoree.log.jar"));
+        jarLog.load(Helper.stream2File(this.getClass().getClassLoader().getResourceAsStream("org.kevoree.log.jar"),"org.kevoree.log.jar"));
         //jarLog.isolateFromSystem();
         systemEnabledKCL.attachChild(jarLog);
 
@@ -63,6 +65,11 @@ public class SimpleTest {
 
         InputStream stream = systemEnabledKCL.getResourceAsStream("META-INF/maven/org.kevoree.kcl/org.kevoree.kcl/pom.xml");
         System.out.println(stream);
+
+
+        System.out.println(systemEnabledKCL.getResources("META-INF/maven/org.kevoree.kcl/org.kevoree.kcl/pom.xml").hasMoreElements());
+        System.out.println(jar.getResources("META-INF/maven/org.kevoree.kcl/org.kevoree.kcl/pom.xml").hasMoreElements());
+
 
     }
 
