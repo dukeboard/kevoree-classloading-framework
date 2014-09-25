@@ -213,6 +213,7 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         return locked;
     }
 
+    @Override
     public List<FlexyClassLoader> getSubClassLoaders() {
         return subClassLoaders;
     }
@@ -328,7 +329,6 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
             }
         }
         request.passedKlassLoader.add(getKey());
-
         //TODO check if there no risk of cycle
         if (result == null && resolutionPriority.equals(ResolutionPriority.PARENT)) {
             ClassLoader parentCL = getParent();
