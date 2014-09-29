@@ -3,12 +3,12 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>org.kevoree.kcl.boot</artifactId>
     <name>Kevoree :: KCL :: Boot</name>
-    <version>19</version>
+    <version>20-SNAPSHOT</version>
 
     <parent>
         <artifactId>org.kevoree.kcl.root</artifactId>
         <groupId>org.kevoree.kcl</groupId>
-        <version>19</version>
+        <version>20-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
