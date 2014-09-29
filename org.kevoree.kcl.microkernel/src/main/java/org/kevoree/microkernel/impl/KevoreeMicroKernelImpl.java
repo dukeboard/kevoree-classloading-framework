@@ -40,10 +40,10 @@ public class KevoreeMicroKernelImpl implements KevoreeKernel {
 
     @Override
     public FlexyClassLoader get(String key) {
-        if (key.contains("org.kevoree.log:org.kevoree.log") ||
-                key.contains("org.kevoree.kcl:org.kevoree.kcl") ||
-                key.contains("org.kevoree.kcl:org.kevoree.kcl.microkernel") ||
-                key.contains("org.kevoree:org.kevoree.maven.resolver")) {
+        if (key.contains("org.kevoree.log:org.kevoree.log:") ||
+                key.contains("org.kevoree.kcl:org.kevoree.kcl:") ||
+                key.contains("org.kevoree.kcl:org.kevoree.kcl.microkernel:") ||
+                key.contains("org.kevoree:org.kevoree.maven.resolver:")) {
             return system;
         }
         return classloaders.get(key);
