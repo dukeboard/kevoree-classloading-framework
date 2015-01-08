@@ -134,7 +134,7 @@ public class JarIndexDB implements IndexDB {
                 absPath = absPath.substring(1);
             }
             if (file.isDirectory()) {
-                absPath = absPath + File.separator;
+                absPath = absPath + "/";
             }
             if (file.getName().endsWith(".jar")) {
                 Log.debug("KCL Found sub Jar => {}", file.getName());
@@ -154,7 +154,7 @@ public class JarIndexDB implements IndexDB {
                 out.flush();
                 out.close();
                 fis.close();
-                jarClassCaches.put(absPath, out.toByteArray());
+                jarClassCaches.put(absPath.replace(File.separator,"/"), out.toByteArray());
             }
             List<URL> rurl = jarContentURLs.get(absPath);
             if (rurl == null) {
