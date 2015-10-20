@@ -430,6 +430,12 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         for (FlexyClassLoaderImpl sub : potentials) {
             selfRes.addAll(sub.internal_getResources(name));
         }
+        /*
+        System.err.println("findResources "+name +" - "+getKey()+"-"+Thread.currentThread().getName());
+        for(int i=0;i<selfRes.size();i++){
+            System.err.println("    ->"+selfRes.get(i).toString());
+        }*/
+
         return Collections.enumeration(selfRes);
     }
 
@@ -483,6 +489,16 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         if ((classpathResources).contains(request.className)) {
             result.add(this);
         }
+        //go to current thread class loader
+
+        ClassLoader threadContextCL = Thread.currentThread().getContextClassLoader();
+        if (threadContextCL instanceof FlexyClassLoaderImpl) {
+            FlexyClassLoaderImpl castedCL = (FlexyClassLoaderImpl) threadContextCL;
+            if (!request.passedKlassLoader.contains((castedCL).getKey())) {
+                result.addAll(castedCL.graphResourcesOwnerResolution(request));
+            }
+        }
+
         ArrayList<FlexyClassLoader> tempSubs = new ArrayList(subClassLoaders);
         Collections.sort(tempSubs, scoreSorter);
         for (FlexyClassLoader subCL : tempSubs) {
