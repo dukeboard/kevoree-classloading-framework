@@ -49,6 +49,7 @@ public class URLTest {
         System.out.println(jar.getResource("org"));
         System.out.println(jar.getResource("org/"));
 
+        f.delete();
 
     }
 
