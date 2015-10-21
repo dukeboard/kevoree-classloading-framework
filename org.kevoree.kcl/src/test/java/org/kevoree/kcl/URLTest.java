@@ -40,12 +40,14 @@ public class URLTest {
 
     @Test
     public void simpleTestFileClassUrl() throws IOException, ClassNotFoundException {
-        URLClassLoader loader = new URLClassLoader(new URL[]{this.getClass().getClassLoader().getResource("org.kevoree.kcl.jar")});
-        System.out.println(loader.getResource("org"));
 
         FlexyClassLoader jar = FlexyClassLoaderFactory.INSTANCE.create();
         File f = Helper.stream2File(this.getClass().getClassLoader().getResourceAsStream("org.kevoree.kcl.jar"), "org.kevoree.kcl.jar");
         jar.load(f);
+
+        URLClassLoader loader = new URLClassLoader(new URL[]{f.toURL()});
+        System.out.println(f.toURL());
+        System.out.println(loader.getResource("org"));
         System.out.println(jar.getResource("org"));
         System.out.println(jar.getResource("org/"));
 
