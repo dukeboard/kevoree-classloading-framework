@@ -12,9 +12,6 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Created by duke on 10/01/2014.
- */
 public class FlexyClassLoaderImpl extends FlexyClassLoader {
 
     @Override
@@ -40,7 +37,6 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
 
     @Override
     public Class loadClass(String className, boolean resolveIt) throws ClassNotFoundException {
-
         KlassLoadRequest request = new KlassLoadRequest();
         request.className = className;
         Class result = internal_loadClass(request);
@@ -431,11 +427,12 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
             selfRes.addAll(sub.internal_getResources(name));
         }
         /*
-        System.err.println("findResources "+name +" - "+getKey()+"-"+Thread.currentThread().getName());
+        System.out.println("findResources "+name +" - "+getKey()+"-"+Thread.currentThread().getName());
         for(int i=0;i<selfRes.size();i++){
-            System.err.println("    ->"+selfRes.get(i).toString());
-        }*/
-
+            System.out.println("    ->"+selfRes.get(i).toString()+"-"+selfRes.get(i).openStream().available());
+        }
+        System.out.println("    endFindResources "+name);
+        */
         return Collections.enumeration(selfRes);
     }
 
