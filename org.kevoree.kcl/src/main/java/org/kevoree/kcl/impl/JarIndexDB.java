@@ -88,6 +88,16 @@ public class JarIndexDB implements IndexDB {
                     }
                     String url = "jar:file:" + origin.getAbsolutePath() + "!/" + entry.getName();
                     rurl.add(new URL(url));
+                    if(url.endsWith(File.separator)){
+                        String cleaned = entry.getName().substring(0,entry.getName().length()-1);
+                        List<URL> rurl2 = jarContentURLs.get(cleaned);
+                        if (rurl2 == null) {
+                            rurl2 = new ArrayList<URL>();
+                            jarContentURLs.put(cleaned, rurl2);
+                        }
+                        String url2 = "jar:file:" + origin.getAbsolutePath() + "!/" + cleaned;
+                        rurl2.add(new URL(url2));
+                    }
                 }
             }
         }

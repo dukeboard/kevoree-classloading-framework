@@ -9,6 +9,7 @@ import org.kevoree.log.Log;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLClassLoader;
 
 /**
  * Created by duke on 9/24/14.
@@ -36,6 +37,21 @@ public class URLTest {
         Class resolvedLogClass = jar.loadClass(Log.class.getName());
         assert (!resolvedLogClass.getClassLoader().equals(jar)); // Log class should be resolved from the System ClassLoader nor the new KCL (no binding)
     }
+
+    @Test
+    public void simpleTestFileClassUrl() throws IOException, ClassNotFoundException {
+        URLClassLoader loader = new URLClassLoader(new URL[]{this.getClass().getClassLoader().getResource("org.kevoree.kcl.jar")});
+        System.out.println(loader.getResource("org"));
+
+        FlexyClassLoader jar = FlexyClassLoaderFactory.INSTANCE.create();
+        File f = Helper.stream2File(this.getClass().getClassLoader().getResourceAsStream("org.kevoree.kcl.jar"), "org.kevoree.kcl.jar");
+        jar.load(f);
+        System.out.println(jar.getResource("org"));
+        System.out.println(jar.getResource("org/"));
+
+
+    }
+
 
     /*
     @Test
