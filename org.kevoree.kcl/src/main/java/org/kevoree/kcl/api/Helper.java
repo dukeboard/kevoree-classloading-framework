@@ -11,7 +11,7 @@ import java.io.InputStream;
 public class Helper {
 
     public static File stream2File(InputStream in, String optName) throws IOException {
-        File tempF = File.createTempFile("kcl_temp_stream", optName);
+        File tempF = File.createTempFile("kcl_temp_stream", null);
         tempF.deleteOnExit();
         FileOutputStream fw = new FileOutputStream(tempF);
         byte[] buffer = new byte[1024];

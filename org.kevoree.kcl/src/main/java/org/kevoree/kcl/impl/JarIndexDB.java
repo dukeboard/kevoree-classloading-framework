@@ -63,7 +63,11 @@ public class JarIndexDB implements IndexDB {
                 }
                 if (!filtered) {
                     if (entry.getName().endsWith(".jar")) {
-                        loadJar(Helper.stream2File(jarInput.getInputStream(entry), entry.getName()));
+                        try {
+                            loadJar(Helper.stream2File(jarInput.getInputStream(entry), entry.getName()));
+                        } catch (Exception e){
+                            e.printStackTrace();
+                        }
                     }
                     if (entry.getName().endsWith(".class")) {
                         byte[] b = new byte[2048];

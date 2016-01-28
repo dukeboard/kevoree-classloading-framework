@@ -157,7 +157,11 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
     }
 
     /* Check if explicit mapping found, otherwise call standard method */
+    @Override
     public String findLibrary(String p1) {
+
+        System.err.println("FindLib=" + p1);
+
         //TODO automatic resolution of all .so, .dll, dylib, etc ....
         if (nativeMap.containsKey(p1)) {
             return nativeMap.get(p1);
@@ -377,7 +381,8 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
     protected URL findResource(String name) {
         FlexyClassLoaderImpl resolved = resourceOwnerResolution(name);
         if (resolved != null) {
-            return resolved.internal_getResource(name);
+            URL resolvedURL = resolved.internal_getResource(name);
+            return resolvedURL;
         } else {
             return null;
         }
@@ -459,6 +464,19 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
             return this;
         }
         FlexyClassLoaderImpl result = null;
+
+        ClassLoader threadContextCL = Thread.currentThread().getContextClassLoader();
+        if (threadContextCL instanceof FlexyClassLoaderImpl) {
+            FlexyClassLoaderImpl castedCL = (FlexyClassLoaderImpl) threadContextCL;
+            if (!request.passedKlassLoader.contains((castedCL).getKey())) {
+                result = castedCL.graphResourceOwnerResolution(request);
+            }
+        }
+        if(result != null){
+            return result;
+        }
+
+
         ArrayList<FlexyClassLoader> tempSubs = new ArrayList(subClassLoaders);
         Collections.sort(tempSubs, scoreSorter);
         for (FlexyClassLoader subCL : tempSubs) {
