@@ -3,12 +3,12 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>org.kevoree.kcl.view</artifactId>
     <name>Kevoree :: KCL :: View</name>
-    <version>23-SNAPSHOT</version>
+    <version>23</version>
 
     <parent>
         <artifactId>org.kevoree.kcl.root</artifactId>
         <groupId>org.kevoree.kcl</groupId>
-        <version>23-SNAPSHOT</version>
+        <version>23</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
