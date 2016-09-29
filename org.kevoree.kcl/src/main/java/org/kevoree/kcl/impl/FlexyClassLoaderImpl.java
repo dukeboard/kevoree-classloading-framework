@@ -28,11 +28,9 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         if (result == null) {
             byte[] bytes = loadClassBytes(className);
             if (bytes != null) {
-                synchronized (lock) {
-                    result = getLoadedClass(className);
-                    if (result == null) {
-                        result = internal_defineClass(className, bytes);
-                    }
+                result = getLoadedClass(className);
+                if (result == null) {
+                    result = internal_defineClass(className, bytes);
                 }
             }
         }
@@ -241,7 +239,7 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         return findLoadedClass(className);
     }
 
-    protected Class internal_defineClass(String className, byte[] bytes) {
+    protected synchronized Class internal_defineClass(String className, byte[] bytes) {
         if (className.contains(".")) {
             String packageName = className.substring(0, className.lastIndexOf('.'));
             if (getPackage(packageName) == null) {
@@ -252,7 +250,11 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
                 }
             }
         }
-        return defineClass(className, bytes, 0, bytes.length);
+        Class clazz = getLoadedClass(className);
+        if (clazz == null) {
+            return defineClass(className, bytes, 0, bytes.length);
+        }
+        return clazz;
     }
 
     private Comparator scoreSorter = new Comparator<FlexyClassLoader>() {
@@ -306,8 +308,6 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         return result;
     }
 
-    private Object lock = new Object();
-
     public Class internal_loadClass(KlassLoadRequest request) {
         Class result = null;
         //if system class try directly
@@ -323,11 +323,9 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
             if (result == null) {
                 byte[] bytes = loadClassBytes(request.className);
                 if (bytes != null) {
-                    synchronized (lock) {
-                        result = getLoadedClass(request.className);
-                        if (result == null) {
-                            result = internal_defineClass(request.className, bytes);
-                        }
+                    result = getLoadedClass(request.className);
+                    if (result == null) {
+                        result = internal_defineClass(request.className, bytes);
                     }
                 }
             }

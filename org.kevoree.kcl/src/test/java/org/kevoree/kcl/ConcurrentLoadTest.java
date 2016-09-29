@@ -18,7 +18,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class ConcurrentLoadTest implements Runnable {
 
-
     @Test
     public void testConcurrentLoad() throws InterruptedException {
         ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 4);
@@ -30,31 +29,31 @@ public class ConcurrentLoadTest implements Runnable {
 
     @Override
     public void run() {
-
-
         try {
-            System.out.println("Perform simple KCL Test");
-            FlexyClassLoader jar = new FlexyClassLoaderImpl();
-            jar.load(Helper.stream2File(this.getClass().getClassLoader().getResourceAsStream("org.kevoree.kcl.jar"),"org.kevoree.kcl.jar"));
+            System.out.println("Perform concurrent KCL test");
+            FlexyClassLoader fcl0 = new FlexyClassLoaderImpl();
+            fcl0.load(Helper.stream2File(
+                    this.getClass().getClassLoader().getResourceAsStream("org.kevoree.kcl.jar"),
+                    "org.kevoree.kcl.jar"));
 
-            FlexyClassLoader jarLog = new FlexyClassLoaderImpl();
-            jarLog.load(Helper.stream2File(this.getClass().getClassLoader().getResourceAsStream("org.kevoree.log.jar"),"org.kevoree.log.jar"));
+            FlexyClassLoader fcl1 = new FlexyClassLoaderImpl();
+            fcl1.load(Helper.stream2File(
+                    this.getClass().getClassLoader().getResourceAsStream("org.kevoree.log.jar"),
+                    "org.kevoree.log.jar"));
 
-            jar.attachChild(jarLog);
+            fcl0.attachChild(fcl1);
 
-            Class resolvedClass = jar.loadClass("org.kevoree.kcl.impl.FlexyClassLoaderImpl");
-            assert (resolvedClass.getClassLoader().equals(jar));
+            Class resolvedClass = fcl0.loadClass(FlexyClassLoaderImpl.class.getName());
+            assert (resolvedClass.getClassLoader().equals(fcl0));
 
-            Class resolvedLogClass = jarLog.loadClass(Log.class.getName());  //std resolution of class
-            assert (resolvedLogClass.getClassLoader().equals(jarLog));
+            Class resolvedLogClass = fcl1.loadClass(Log.class.getName());  //std resolution of class
+            assert (resolvedLogClass.getClassLoader().equals(fcl1));
 
-            Class resolvedLogClassTransitive = jar.loadClass(Log.class.getName());
-            assert (resolvedLogClassTransitive.getClassLoader().equals(jarLog)); // Log class should be resolved from the new KCL
+            Class resolvedLogClassTransitive = fcl0.loadClass(Log.class.getName());
+            assert (resolvedLogClassTransitive.getClassLoader().equals(fcl1)); // Log class should be resolved from the new KCL
             //TEst the transitive link
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-
     }
 }
