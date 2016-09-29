@@ -14,6 +14,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class FlexyClassLoaderImpl extends FlexyClassLoader {
 
+    static {
+        ClassLoader.registerAsParallelCapable();
+    }
+
     @Override
     public Class loadClass(String className) throws ClassNotFoundException {
         return loadClass(className, true);
