@@ -2,6 +2,7 @@ package org.kevoree.kcl.api;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.List;
 
 /**
@@ -25,4 +26,7 @@ public abstract class FlexyClassLoader extends ClassLoader {
 
     public abstract List<FlexyClassLoader> getSubClassLoaders();
 
+    public abstract List<URL> getClassLoaderResources();
+
+    public abstract List<URL> getAllResources();
 }
