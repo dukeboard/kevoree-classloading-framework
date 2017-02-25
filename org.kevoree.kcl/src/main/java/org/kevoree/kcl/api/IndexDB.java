@@ -17,4 +17,6 @@ public interface IndexDB {
 
     public boolean contains(String name);
 
+    List<URL> getResources();
+
 }

@@ -525,4 +525,18 @@ public class FlexyClassLoaderImpl extends FlexyClassLoader {
         return result;
     }
 
+    @Override
+    public List<URL> getClassLoaderResources() {
+        return classpathResources.getResources();
+    }
+
+    @Override
+    public List<URL> getAllResources() {
+        List<URL> allResources = new ArrayList<URL>();
+        for (FlexyClassLoader classLoader : subClassLoaders) {
+            allResources.addAll(classLoader.getAllResources());
+        }
+        allResources.addAll(getClassLoaderResources());
+        return allResources;
+    }
 }

@@ -43,6 +43,14 @@ public class JarIndexDB implements IndexDB {
         return jarContentURLs.get(name);
     }
 
+    @Override
+    public List<URL> getResources() {
+        List<URL> result = new ArrayList<URL>();
+        for (List<URL> list : jarContentURLs.values()) {
+            result.addAll(list);
+        }
+        return result;
+    }
 
     public void loadJar(JarFile jarInput, File origin) throws IOException {
         final Enumeration<JarEntry> entries = jarInput.entries();
